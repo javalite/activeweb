@@ -6,7 +6,7 @@
     <groupId>activeweb</groupId>
     <artifactId>webapp-root</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-ALPHA-SNAPSHOT</version>
     <name>ActiveWeb - WebApp Root</name>
     <description>Root of projects that use ActiveWeb. This module exists to set some defaults for projects using ActiveWeb.</description>
     <developers>
@@ -57,7 +57,7 @@
             <dependency>
                 <groupId>activeweb</groupId>
                 <artifactId>activeweb</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>1.0-ALPHA-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
