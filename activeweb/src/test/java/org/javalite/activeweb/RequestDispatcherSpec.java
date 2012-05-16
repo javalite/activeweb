@@ -206,7 +206,7 @@ public class RequestDispatcherSpec extends RequestSpec {
 
         dispatcher.doFilter(request, response, filterChain);
 
-        a(getSystemErr().contains("java.lang.NoSuchMethodException: app.controllers.HelloController.hello(")).shouldBeTrue();
+        a(getSystemErr().contains("org.javalite.activeweb.ActionNotFoundException: Action hello isn't found for controller class app.controllers.HelloController")).shouldBeTrue();
 
         String html = response.getContentAsString();
 

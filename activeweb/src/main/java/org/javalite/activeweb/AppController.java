@@ -15,6 +15,10 @@ limitations under the License.
 */
 package org.javalite.activeweb;
 
+import org.javalite.activeweb.annotations.DELETE;
+import org.javalite.activeweb.annotations.GET;
+import org.javalite.activeweb.annotations.POST;
+import org.javalite.activeweb.annotations.PUT;
 import org.javalite.activeweb.annotations.RESTful;
 import org.javalite.common.Util;
 
@@ -222,12 +226,26 @@ public abstract class AppController extends HttpSupport {
     }
 
     private HttpMethod getNonRestfulActionHttpMethod(String actionMethodName){
-        try {
-            //TODO: this is using reflection twice for the same thing within one request, refactor please
-            Method method = getClass().getMethod(actionMethodName);
-            Annotation[] annotations = method.getAnnotations();
+    	Annotation[] annotations = null;
+    	//if(Context.getMethod() == null){
+    		//throw new ActionNotFoundException("Action " + actionMethodName + "isn't found for controller " + getClass());
+    	//}
+    	//NOTE this method looks ugly, because I didn't want to rewrite AppControllerSpec test - see commented version for optimal implementation
+    	if(Context.getMethod() == null){
+    		try {
+				annotations = getClass().getMethod(actionMethodName).getAnnotations();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				throw new ActionNotFoundException("Action " + actionMethodName + " isn't found for controller " + getClass());
+			}
+    	} else {
+    		annotations = Context.getMethod().getAnnotations();
 
-            if (annotations.length > 1) {
+    	}
+            
+            if (moreThanOneMethodAnnotation(annotations)) {
                 throw new InitException("Controller: " + getClass() + " is mis-configured. Actions cannot " +
                         "specify more than one HTTP method. Only one of these annotations allowed on any action:" +
                         "@GET, @POST, @PUT, @DELETE");
@@ -239,13 +257,41 @@ public abstract class AppController extends HttpSupport {
             } else {
                 return HttpMethod.method(annotations[0]);
             }
-        }
-        catch (NoSuchMethodException e) {
-            throw new ActionNotFoundException(e);
-        }
     }
 
-    /**
+    /*private HttpMethod getNonRestfulActionHttpMethod(String actionMethodName){
+
+    	if(Context.getMethod() == null){
+    		throw new ActionNotFoundException("Action " + actionMethodName + "isn't found for controller " + getClass());
+    	}
+            Annotation[] annotations = Context.getMethod().getAnnotations();
+
+            if (moreThanOneMethodAnnotation(annotations)) {
+                throw new InitException("Controller: " + getClass() + " is mis-configured. Actions cannot " +
+                        "specify more than one HTTP method. Only one of these annotations allowed on any action:" +
+                        "@GET, @POST, @PUT, @DELETE");
+            }
+
+            //default behavior: GET method!
+            if (annotations.length == 0) {
+                return HttpMethod.GET;
+            } else {
+                return HttpMethod.method(annotations[0]);
+            }
+    }*/
+    
+    private boolean moreThanOneMethodAnnotation(Annotation[] annotations) {
+		int count = 0;
+//There are can be some another annotations, for example @Override etc. Bug in current implementation
+		for(Annotation a : annotations){
+			if(a.annotationType().equals(DELETE.class) || a.annotationType().equals(POST.class) || a.annotationType().equals(PUT.class) || a.annotationType().equals(GET.class)){
+				count++;
+			}
+		}
+		return count > 1;
+	}
+
+	/**
      * @return will return null if action is none of the restful actions.
      */
     private HttpMethod getRestfulActionMethod(String action) {
@@ -283,3 +329,4 @@ public abstract class AppController extends HttpSupport {
         return controllerClass.getAnnotation(RESTful.class) != null;
     }
 }
+

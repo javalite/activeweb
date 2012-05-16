@@ -229,8 +229,12 @@ class ControllerRunner {
 
     private void executeAction(Object controller, String actionName) {
         try{
-            Method m = controller.getClass().getMethod(actionName);
-            m.invoke(controller);
+            List<Object> bindedParams = RequestBinder.bind(controller, actionName);
+			if(bindedParams != null && bindedParams.size() > 0){
+            	Context.getMethod().invoke(controller, bindedParams.toArray());
+            }else {
+            	Context.getMethod().invoke(controller);
+            }
         }catch(InvocationTargetException e){
             if(e.getCause() != null && e.getCause() instanceof  WebException){
                 throw (WebException)e.getCause();                

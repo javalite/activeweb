@@ -15,6 +15,8 @@ limitations under the License.
 */
 package org.javalite.activeweb;
 
+import java.lang.reflect.Method;
+
 import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,11 +34,20 @@ class Context {
     private static ThreadLocal<ControllerResponse> controllerResponse = new ThreadLocal<ControllerResponse>();
     private static ThreadLocal<String> actionName = new ThreadLocal<String>();
     private static ThreadLocal<String> controllerPath = new ThreadLocal<String>();
+    private static ThreadLocal<Method> method = new ThreadLocal<Method>();
     private static ThreadLocal<Boolean> restful = new ThreadLocal<Boolean>();
     private static ThreadLocal<AppContext> appContext = new ThreadLocal<AppContext>();
     private static ThreadLocal<RequestContext> requestContext = new ThreadLocal<RequestContext>();
 
 
+    static Method getMethod() {
+        return method.get();
+    }
+    
+    static void setMethod(Method method) {
+        Context.method.set(method);
+    }
+    
     public static RequestContext getRequestContext() {
         return requestContext.get();
     }
@@ -133,6 +144,7 @@ class Context {
         }
         setControllerPath(Router.getControllerPath(route.getController().getClass()));
         setActionName(route.getActionName());
+        setMethod(route.getMethod());
         setRestful(route.getController().restful());
     }
 
@@ -145,5 +157,7 @@ class Context {
         controllerPath.set(null);
         filterConfig.set(null);
         requestContext.set(null);
+        method.set(null);
     }
 }
+
