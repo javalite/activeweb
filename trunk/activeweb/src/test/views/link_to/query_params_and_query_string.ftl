@@ -1,1 +1,0 @@
-<@link_to controller="home" query_string="year=1993&page=30" query_params={"year":1993, "page":30}>this is a body</@link_to>

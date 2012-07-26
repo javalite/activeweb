@@ -1,1 +1,0 @@
-<@link_to controller="book" action="read" id=2 query_params=the_params class="red_button">Click here to read book 2</@>

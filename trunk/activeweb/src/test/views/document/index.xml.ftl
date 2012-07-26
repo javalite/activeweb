@@ -1,1 +1,0 @@
-<message>this is ${format} document</message>

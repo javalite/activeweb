@@ -1,1 +1,0 @@
-user name is ${user_name}

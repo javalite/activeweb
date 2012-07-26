@@ -1,1 +1,0 @@
-<@select list=books/>

@@ -1,1 +1,0 @@
-<@link_to controller="abc_person" action="index2">Index 2 </@>

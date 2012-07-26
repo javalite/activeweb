@@ -1,1 +1,0 @@
-<message>XML from show action</message>

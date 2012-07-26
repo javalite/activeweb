@@ -1,3 +1,0 @@
-index page
-
-${name}

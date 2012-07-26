@@ -1,1 +1,0 @@
-<@render partial="fruit_name" a_fruit=fruit_name/>

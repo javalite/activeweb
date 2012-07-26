@@ -1,1 +1,0 @@
-<@link_to controller="/rest/book"  action="edit_form" >Click here to read book 2</@>
