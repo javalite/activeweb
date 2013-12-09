@@ -48,16 +48,6 @@ public class FlashSpec extends IntegrationSpec {
         a(responseContent()).shouldBeEqual("hello from flashing list: ");
     }
 
-    @Test
-    public void shouldBeAbleToFlashOnTwoConsecutiveRequests() {
-        controller("flashing").get("create");
-        a(session().get("flasher")).shouldNotBeNull();
-        a(flash("saved")).shouldBeEqual("your data has been saved");
-
-        controller("flashing").get("as-vararg");
-        a(session().get("flasher")).shouldNotBeNull();
-        a(flash("one")).shouldBeEqual(1);
-    }
 
     @Test
     public void shouldPropagateFlashAsMap(){
