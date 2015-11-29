@@ -288,4 +288,23 @@ public class RouterCustomSpec extends RequestSpec {
         execDispatcher();
         a(responseContent()).shouldBeEqual("");
     }
+
+
+    @Test
+    public void shouldTest_248() {
+
+        routeConfig = new AbstractRouteConfig() {
+            public void init(AppContext appContext) {
+                route("/projects/{id}").get().to(ProjectsController.class).action("view");
+                route("/projects/new_form").get().to(ProjectsController.class).action("newForm");
+
+            }
+        };
+        request.setServletPath("/projects/new_form");
+        request.setMethod("get");
+        execDispatcher();
+
+        a(responseContent()).shouldBeEqual("view");
+
+    }
 }
