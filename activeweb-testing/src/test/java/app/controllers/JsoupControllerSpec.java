@@ -15,7 +15,7 @@ public class JsoupControllerSpec extends ControllerSpec {
     @Test
     public void shouldFindContentOfElement(){
         request().get("index");
-        a(text("div[class=\"main\"]")).shouldBeEqual("hello");
+        a(text("div[class='main']")).shouldBeEqual("hello");
     }
 
     @Test

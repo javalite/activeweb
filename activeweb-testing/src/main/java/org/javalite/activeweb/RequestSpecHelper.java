@@ -331,9 +331,10 @@ public class RequestSpecHelper extends SpecHelper{
      * @return contents of selected element as text.
      */
     protected String text(String cssQuery){
-        Document doc = Jsoup.parse(responseContent().replace("'", "\"")); //TODO: this replacement can be removed
+        Document doc = Jsoup.parse(responseContent());
+
+        Elements elements  = doc.select(cssQuery.replace("'", "\"")); //TODO: this replacement can be removed
         // when this PL is accepted: https://github.com/jhy/jsoup/pull/655 and a new JSoup version released
-        Elements elements  = doc.select(cssQuery);
         if(elements.isEmpty()){
             return null;
         }else if(elements.size() > 1){
@@ -356,6 +357,8 @@ public class RequestSpecHelper extends SpecHelper{
      * @return number of elements in HTML document that were matching the query.
      */
     public int count(String cssQuery) {
-        return Jsoup.parse(responseContent().replace("'", "\"")).select(cssQuery).size();
+        //TODO: this replacement can be removed
+        // when this PL is accepted: https://github.com/jhy/jsoup/pull/655 and a new JSoup version released
+        return Jsoup.parse(responseContent()).select(cssQuery.replace("'", "\"")).size();
     }
 }
