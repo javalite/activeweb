@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static org.javalite.common.Util.blank;
 
@@ -105,8 +106,8 @@ public class FreeMarkerTemplateManager extends TemplateManager {
                 values.put("page_content", pageWriter.toString());
                 Map<String, List<String>>  assignedValues = ContentTL.getAllContent();
 
-                for(String name: assignedValues.keySet()){
-                    values.put(name, Util.join(assignedValues.get(name), " "));
+                for(Entry<String, List<String>> assignedValue: assignedValues.entrySet()){
+                    values.put(assignedValue.getKey(), Util.join(assignedValue.getValue(), " "));
                 }
 
                 Template layoutTemplate = config.getTemplate(layout + ".ftl");

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import static org.javalite.common.Util.blank;
@@ -62,8 +63,8 @@ public class Configuration {
                 overrides.load(in2);
             }
 
-            for (Object name : overrides.keySet()) {
-                props.put(name, overrides.get(name));
+            for (Entry<Object, Object> override : overrides.entrySet()) {
+                props.put(override.getKey(), override.getValue());
             }
             checkInitProperties();
             initTemplateManager();            

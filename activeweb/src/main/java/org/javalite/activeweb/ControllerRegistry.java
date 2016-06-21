@@ -20,6 +20,7 @@ import com.google.inject.Injector;
 
 import javax.servlet.FilterConfig;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Registration facility for {@link ControllerMetaData}.
@@ -96,8 +97,8 @@ class ControllerRegistry {
                         }
                     }
                     //inject specific controller filters:
-                    for (String key : metaDataMap.keySet()) {
-                        metaDataMap.get(key).injectFilters(injector);
+                    for (Entry<String, ControllerMetaData> metadata : metaDataMap.entrySet()) {
+                    	metadata.getValue().injectFilters(injector);
                     }
                 }
                 filtersInjected = true;
