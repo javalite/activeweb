@@ -201,7 +201,8 @@ public class RouteBuilder {
     }
 
     protected String getActionName() {
-        return actionName == null ? actionName = "index": actionName;
+        actionName = (actionName == null) ? "index": actionName;
+        return actionName;
     }
 
     protected String getId() {
@@ -210,7 +211,8 @@ public class RouteBuilder {
 
     protected AppController getController() {
         try {
-            return controller == null? controller = type.newInstance(): controller ;
+            controller = (controller == null) ? type.newInstance(): controller ;
+            return controller;
         } catch (Exception e) {
             throw new ControllerException(e);
         }
