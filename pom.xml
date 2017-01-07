@@ -4,7 +4,7 @@
     <groupId>org.javalite</groupId>
     <artifactId>activeweb-root</artifactId>
     <packaging>pom</packaging>
-    <version>1.15-SNAPSHOT</version>
+    <version>1.15.j7-SNAPSHOT</version>
     <name>ActiveWeb - Root</name>
     <description>ActiveWeb  - Java Web Framework inspired by Ruby on Rails</description>
     <developers>
@@ -36,7 +36,8 @@
     </modules>
 
     <properties>
-        <activejdbc.version>1.4.12</activejdbc.version>
+        <activejdbc.version>1.4.13.j7</activejdbc.version>
+        <slf4j.version>1.7.0</slf4j.version>
     </properties>
 
     <build>
@@ -114,13 +115,13 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.10</version>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
-                <version>1.6.4</version>
+                <version>${slf4j.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
