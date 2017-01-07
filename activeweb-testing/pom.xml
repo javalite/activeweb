@@ -3,7 +3,7 @@
 
     <artifactId>activeweb-testing</artifactId>
     <packaging>jar</packaging>
-    <version>1.15.j7-SNAPSHOT</version>
+    <version>1.15.j7</version>
     <name>ActiveWeb - Testing</name>
     <description>Testing dependency for building controller, view and integration specs.</description>
     <developers>
@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.javalite</groupId>
         <artifactId>activeweb-root</artifactId>
-        <version>1.15.j7-SNAPSHOT</version>
+        <version>1.15.j7</version>
     </parent>
 
     <dependencies>
