@@ -17,6 +17,7 @@ limitations under the License.
 package org.javalite.activeweb.controller_filters;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Use this filter to log HTTP request (and response) headers to a log system.
@@ -62,8 +63,8 @@ public class HeadersLogFilter extends AbstractLoggingFilter {
     private String format(Map<String, String> headers){
         StringBuilder sb = new StringBuilder("{");
         int i = 0;
-        for (String header : headers.keySet()) {
-            sb.append("\"").append(header).append("\" : \"").append(headers.get(header)).append("\"");
+        for (Entry<String, String> header : headers.entrySet()) {
+            sb.append("\"").append(header.getKey()).append("\" : \"").append(header.getValue()).append("\"");
             if(i < (headers.size() - 1)){
                 sb.append(", ");
             }

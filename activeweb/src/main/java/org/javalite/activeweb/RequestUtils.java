@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static java.util.Arrays.asList;
 import static org.javalite.common.Collections.list;
@@ -371,8 +372,8 @@ public class RequestUtils {
 
         Map<String, String> userSegments = Context.getRequestContext().getUserSegments();
 
-        for(String name:userSegments.keySet()){
-            params.put(name, new String[]{userSegments.get(name)});
+        for(Entry<String, String> userSegment:userSegments.entrySet()){
+            params.put(userSegment.getKey(), new String[]{userSegment.getValue()});
         }
 
         return params;

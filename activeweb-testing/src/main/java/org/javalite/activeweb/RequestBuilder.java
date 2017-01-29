@@ -16,10 +16,11 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import com.google.inject.Injector;
+
 import org.springframework.mock.web.*;
 
-
 import java.util.*;
+import java.util.Map.Entry;
 
 import static org.javalite.activeweb.ControllerFactory.createControllerInstance;
 import static org.javalite.activeweb.ControllerFactory.getControllerClassName;
@@ -404,9 +405,9 @@ public class RequestBuilder {
         }
     }
 
-    private void addHeaders(MockHttpServletRequest request) {        
-        for(String header: headers.keySet()){
-            request.addHeader(header, headers.get(header));
+    private void addHeaders(MockHttpServletRequest request) {
+        for(Entry<String, String> header: headers.entrySet()){
+            request.addHeader(header.getKey(), header.getValue());
         }
     }
 
@@ -420,16 +421,16 @@ public class RequestBuilder {
     }
 
     private void addParameterValues(MockHttpServletRequest httpServletRequest) {
-        for (String key : values.keySet()) {
-            Object value = values.get(key);
+        for (Entry<String, Object> attribute : values.entrySet()) {
+            Object value = attribute.getValue();
             if(value instanceof List){
                 List<String> strings = new ArrayList<>(((List) value).size());
                 for (Object v: ((List)value)) {
                     strings.add(v.toString());
                 }
-                httpServletRequest.addParameter(key, strings.toArray(new String[]{}));
+                httpServletRequest.addParameter(attribute.getKey(), strings.toArray(new String[]{}));
             }else{
-                httpServletRequest.addParameter(key, value.toString());
+                httpServletRequest.addParameter(attribute.getKey(), value.toString());
             }
         }
     }
