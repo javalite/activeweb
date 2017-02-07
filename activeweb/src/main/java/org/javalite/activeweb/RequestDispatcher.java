@@ -205,18 +205,12 @@ public class RequestDispatcher implements Filter {
                 return;
             }
 
-            if (route != null) {
-                Context.setRoute(route);
-                if (Configuration.logRequestParams()) {
-                    logger.info("================ New request: " + new Date() + " ================");
-                }
-                runner.run(route, true);
-            } else {
-                //TODO: theoretically this will never happen, because if the route was not excluded, the router.recognize() would throw some kind
-                // of exception, leading to the a system error page.
-                logger.warn("No matching route for servlet path: " + request.getServletPath() + ", passing down to container.");
-                chain.doFilter(req, resp);//let it fall through
+            Context.setRoute(route);
+            if (Configuration.logRequestParams()) {
+                logger.info("================ New request: " + new Date() + " ================");
             }
+            runner.run(route, true);
+            
         } catch (CompilationException e) {
             renderSystemError(e);
         } catch (ClassLoadException | ActionNotFoundException e) {
