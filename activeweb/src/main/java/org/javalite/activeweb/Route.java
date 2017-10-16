@@ -1,5 +1,8 @@
 package org.javalite.activeweb;
 
+import org.javalite.common.Inflector;
+
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -10,9 +13,11 @@ import java.util.List;
 public class Route {
 
     private AppController controller;
-    private String actionName, id, wildCardName, wildCardValue;
+    private String actionName, id, wildCardName, wildCardValue, actionMethodName;
     private List<IgnoreSpec> ignoreSpecs;
     private HttpMethod method;
+    private Method actionMethod;
+
 
     public Route(AppController controller, String actionName, HttpMethod method) {
         this.controller = controller;
@@ -40,6 +45,13 @@ public class Route {
         this.controller = controller;
     }
 
+
+    private void init(){
+        actionMethodName = Inflector.camelize(actionName.replace('-', '_'), false);
+
+
+
+    }
     public boolean isWildCard(){
         return wildCardName != null;
     }

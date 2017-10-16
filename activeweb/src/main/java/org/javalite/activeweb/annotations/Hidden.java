@@ -21,7 +21,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark an action of a controller with this annotation to receive an HTTP HEAD request.
+ * Mark an action of a controller with this annotation to prement is from being called by a web request.
+ * Technically speaking, non-public methods cannot be executed by a web request. This annotation adds the same
+ * capability to public methods.
  *
  * @author Igor Polevoy
  */

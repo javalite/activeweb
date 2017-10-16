@@ -87,6 +87,29 @@ class ControllerRunner {
         processFlash();
     }
 
+    /**
+     * Checks if the action method supports requested HTTP method
+     */
+    private boolean checkActionMethod(AppController controller, String actionMethod) {
+
+
+        HttpMethod method = HttpMethod.getMethod(RequestContext.getHttpRequest());
+
+        if (!controller.actionSupportsHttpMethod(actionMethod, method)) {
+            DirectResponse res = new DirectResponse("");
+            //see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+            res.setStatus(405);
+            LOGGER.warn("Requested action does not support HTTP method: " + method.name() + ", returning status code 405.");
+            RequestContext.setControllerResponse(res);
+
+            //TODO: candidate for caching below, list of allowed HTTP methods
+            //see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+            RequestContext.getHttpResponse().setHeader("Allow", join(controller.allowedActions(actionMethod), ", "));
+            return false;
+        }
+        return true;
+    }
+
     private void executeAction(Object controller, String actionName) {
         try{
             Method m = controller.getClass().getMethod(actionName);
@@ -207,26 +230,6 @@ class ControllerRunner {
                 }
             }
         }
-    }
-
-    /**
-     * Checks if the action method supports requested HTTP method
-     */
-    private boolean checkActionMethod(AppController controller, String actionMethod) {
-        HttpMethod method = HttpMethod.getMethod(RequestContext.getHttpRequest());
-        if (!controller.actionSupportsHttpMethod(actionMethod, method)) {
-            DirectResponse res = new DirectResponse("");
-            //see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-            res.setStatus(405);
-            LOGGER.warn("Requested action does not support HTTP method: " + method.name() + ", returning status code 405.");
-            RequestContext.setControllerResponse(res);
-
-            //TODO: candidate for caching below, list of allowed HTTP methods
-            //see http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
-            RequestContext.getHttpResponse().setHeader("Allow", join(controller.allowedActions(actionMethod), ", "));
-            return false;
-        }
-        return true;
     }
 
     private boolean exceptionHandled(Exception e, Route route) throws Exception{
