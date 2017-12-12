@@ -24,7 +24,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class UploadControllerSpec extends IntegrationSpec{
+public class UploadControllerSpec extends AppSpec{
 
     @Before
     public void before(){

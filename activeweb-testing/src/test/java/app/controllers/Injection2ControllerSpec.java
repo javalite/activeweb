@@ -20,8 +20,7 @@ package app.controllers;
 import app.services.Greeter;
 import app.services.Redirector;
 import app.services.RedirectorImpl;
-import com.google.inject.Injector;
-import org.javalite.activeweb.AppIntegrationSpec;
+import org.javalite.activeweb.AppSpec;
 import org.javalite.activeweb.mocks.GreeterMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +28,7 @@ import org.junit.Test;
 /** 
  * @author Igor Polevoy
  */
-public class Injection2ControllerSpec extends AppIntegrationSpec {
+public class Injection2ControllerSpec extends AppSpec {
 
     @Before
     public void before(){

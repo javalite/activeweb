@@ -8,7 +8,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy: 9/30/12 12:18 AM
  */
-public class IncludeExcludeControllerSpec extends AppIntegrationSpec {
+public class IncludeExcludeControllerSpec extends AppSpec {
 
     @Before
     public void before(){

@@ -16,8 +16,7 @@ limitations under the License.
 
 package app.controllers;
 
-import org.javalite.activeweb.ControllerException;
-import org.javalite.activeweb.ControllerSpec;
+import org.javalite.activeweb.AppSpec;
 import org.javalite.activeweb.freemarker.UserTag;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +26,7 @@ import org.junit.Test;
  *  
  * @author Igor Polevoy
  */
-public class SessionControllerSpec extends ControllerSpec {
+public class SessionControllerSpec extends AppSpec{
 
     @Before
     public void before(){

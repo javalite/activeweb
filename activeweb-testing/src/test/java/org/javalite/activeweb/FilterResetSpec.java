@@ -8,7 +8,7 @@ import org.junit.Test;
 /**
  * @author igor on 7/1/17.
  */
-public class FilterResetSpec extends AppIntegrationSpec{
+public class FilterResetSpec extends AppSpec{
 
     @Test
     public void shouldResetFilters(){

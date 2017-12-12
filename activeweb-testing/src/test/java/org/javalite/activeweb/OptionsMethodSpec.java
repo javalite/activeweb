@@ -22,7 +22,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class OptionsMethodSpec extends IntegrationSpec{
+public class OptionsMethodSpec extends AppSpec{
 
     @Test
     public void shouldRouteToOptionsMethod(){

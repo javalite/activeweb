@@ -13,12 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and 
 limitations under the License. 
 */
-
 package org.javalite.activeweb;
 
 import app.controllers.AbcControllerTest;
 import app.controllers.CookieControllerSpec;
 import app.controllers.test.HelloControllerSpec;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.javalite.test.jspec.JSpec.a;
@@ -27,7 +27,23 @@ import static org.javalite.test.jspec.JSpec.a;
 /**
  * @author Igor Polevoy
  */
-public class ControllerSpecSpec {
+public class AppSpecSpec extends AppSpec {
+
+
+    @Before
+    public void before(){
+        setTemplateLocation("src/test/views");
+    }
+
+    @Test
+    public void shouldPropagateSessionObjectAcrossMultipleRequests(){
+        controller("student").get("index");
+        controller("student").get("register");
+
+        a(session().get("student_name")).shouldBeEqual("John");
+        a(session().get("student_id")).shouldBeEqual("123");
+    }
+
 
     @Test(expected = SpecException.class)
     public void shouldFailIfControllerSpecIsNotInDefaultPackage(){
@@ -54,7 +70,4 @@ public class ControllerSpecSpec {
         HelloControllerSpec spec = new HelloControllerSpec();
         a(spec.getControllerPath()).shouldBeEqual("/test/hello");
     }
-
-
-
 }

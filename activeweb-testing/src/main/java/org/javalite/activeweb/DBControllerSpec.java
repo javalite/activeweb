@@ -24,9 +24,15 @@ import org.junit.BeforeClass;
  * Super class for controllers requiring a DB connection to the test DB.
  * Connection is opened before a test, closed after a test and a transaction is rolled back.
  *
+ *
+ * <p>
+ *     <strong>Deprecated:</strong> use {@link AppSpec}.
+ * </p>
+ *
  * @author Igor Polevoy
  */
-public class DBControllerSpec extends ControllerSpec {
+@Deprecated
+public class DBControllerSpec extends AppSpec {
 
     @BeforeClass
     public static void initDBConfig() {

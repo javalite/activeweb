@@ -1,13 +1,13 @@
 package app.controllers;
 
-import org.javalite.activeweb.ControllerSpec;
+import org.javalite.activeweb.AppSpec;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Igor Polevoy: 3/5/12 1:23 PM
  */
-public class BlankParameterControllerSpec extends ControllerSpec {
+public class BlankParameterControllerSpec extends AppSpec {
 
 
     @Before

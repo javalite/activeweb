@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class InjectionFilterSpec extends AppIntegrationSpec {
+public class InjectionFilterSpec extends AppSpec {
 
 
     public InjectionFilterSpec(){

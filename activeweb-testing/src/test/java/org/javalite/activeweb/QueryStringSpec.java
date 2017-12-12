@@ -24,7 +24,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class QueryStringSpec extends AppIntegrationSpec {
+public class QueryStringSpec extends AppSpec {
 
     public QueryStringSpec(){
         suppressDb();

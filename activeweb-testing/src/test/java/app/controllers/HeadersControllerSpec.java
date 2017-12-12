@@ -1,12 +1,12 @@
 package app.controllers;
 
-import org.javalite.activeweb.ControllerSpec;
+import org.javalite.activeweb.AppSpec;
 import org.junit.Test;
 
 /**
  * @author igor on 11/29/16.
  */
-public class HeadersControllerSpec extends ControllerSpec {
+public class HeadersControllerSpec extends AppSpec {
 
     @Test
     public void shouldGtHeaders(){

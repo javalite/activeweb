@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy on 6/21/15.
  */
-public class IntegrateViewsSpec extends IntegrationSpec {
+public class IntegrateViewsSpec extends AppSpec {
 
     @Before
     public void before(){

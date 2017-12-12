@@ -21,7 +21,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class BlahControllerSpec  extends ControllerSpec{
+public class BlahControllerSpec  extends AppSpec{
     @Override
     public void atStart() {
         //nothing

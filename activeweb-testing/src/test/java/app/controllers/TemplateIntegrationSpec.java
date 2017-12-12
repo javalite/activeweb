@@ -1,13 +1,12 @@
 package app.controllers;
 
-import org.javalite.activeweb.ControllerSpec;
-import org.javalite.activeweb.IntegrationSpec;
+import org.javalite.activeweb.AppSpec;
 import org.junit.Before;
 
 /**
  * @author igor on 7/28/17.
  */
-public class TemplateIntegrationSpec extends IntegrationSpec{
+public class TemplateIntegrationSpec extends AppSpec {
 
     @Before
     public void before(){

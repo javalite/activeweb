@@ -27,9 +27,15 @@ import org.junit.BeforeClass;
  * Super class of a general spec that requires a connection to a test DB.
  * Before each test, a connection is opened to a test DB and transaction is started.
  * After each test, a connection is closed and a transaction is rolled back.
- * 
+ *
+ *
+ * <p>
+ *     <strong>Deprecated:</strong> use {@link AppSpec}.
+ * </p>
+ *
  * @author Igor Polevoy
  */
+@Deprecated
 public class DBSpec implements JSpecSupport {
 
     @BeforeClass

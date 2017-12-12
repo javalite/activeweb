@@ -9,7 +9,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy: 3/5/12 11:19 AM
  */
-public class Issue88Spec extends AppIntegrationSpec {
+public class Issue88Spec extends AppSpec {
 
     @Before
     public void before() {

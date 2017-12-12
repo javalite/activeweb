@@ -30,9 +30,14 @@ import javax.servlet.ServletException;
  * a test DB, transaction is started before each test. After each test, a connection is closed and a transaction
  * is rolled back.
  *
+ * <p>
+ *     <strong>Deprecated:</strong> use {@link AppSpec}.
+ * </p>
+ *
  *
  * @author Igor Polevoy
  */
+@Deprecated
 public abstract class AppIntegrationSpec extends IntegrationSpec{
 
     private boolean suppressDb;

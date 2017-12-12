@@ -21,9 +21,15 @@ import org.javalite.activeweb.controller_filters.HttpSupportFilter;
 /**
  * Use this as a super class for integration tests that do not require a DB connection.
  * An integration test allows to describe a scenario of actions that span multiple controllers.
- * 
+ *
+ *
+ * <p>
+ *     <strong>Deprecated:</strong> use {@link AppSpec}.
+ * </p>
+ *
  * @author Igor Polevoy
  */
+@Deprecated
 public class IntegrationSpec extends RequestSpecHelper {
 
     public IntegrationSpec() {

@@ -16,14 +16,13 @@ limitations under the License.
 package org.javalite.activeweb;
 
 
-import org.javalite.activeweb.ControllerSpec;
 import org.junit.Test;
 
 
 /**
  * @author Igor Polevoy
  */
-public class OptionsRestControllerSpec extends IntegrationSpec {
+public class OptionsRestControllerSpec extends AppSpec {
     @Test
     public void shouldRouteToOptionsMethod(){
         controller("options_rest").options("options");

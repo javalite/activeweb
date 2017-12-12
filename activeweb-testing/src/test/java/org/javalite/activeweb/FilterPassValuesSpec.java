@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class FilterPassValuesSpec  extends IntegrationSpec{
+public class FilterPassValuesSpec  extends AppSpec{
 
     @Before
     public void before(){

@@ -267,7 +267,11 @@ public class Configuration {
     }
 
     public static boolean rollback() {
-        return Boolean.parseBoolean(get(Params.rollback.toString().trim()));  
+        return Boolean.parseBoolean(get(Params.rollback.toString().trim()));
+    }
+
+    public static void setRollback(boolean rollback){
+        props.setProperty(Params.rollback.toString().trim(), Boolean.toString(rollback));
     }
 
     public static boolean activeReload(){

@@ -15,6 +15,9 @@ limitations under the License.
 */
 package app.controllers;
 
+import org.javalite.activeweb.Configuration;
+import org.javalite.activeweb.ControllerException;
+import org.javalite.activeweb.TemplateManager;
 import org.junit.Test;
 
 /**
@@ -37,28 +40,4 @@ public class ControllerSpecControllerSpec extends TemplateControllerSpec {
 
     }
 
-//
-//    @Test
-//    public void shouldExecuteSimpleGetRequest(){
-//        AbcPersonControllerSpec personControllerSpec = new AbcPersonControllerSpec();
-//        personControllerSpec.shouldAssignInformationOnPersonWithGET();
-//        ControllerResponse response = ContextAccess.getControllerResponse();
-//        System.out.println(response);
-//        a(response instanceof RenderTemplateResponse).shouldBeTrue();
-//    }
-//
-//
-//
-//    @Test(expected = ControllerException.class)
-//    public void shouldExecuteSimplePOSTRequest(){
-//        AbcPersonControllerSpec personControllerSpec = new AbcPersonControllerSpec();
-//        personControllerSpec.shouldFailOnPOST();
-//        ControllerResponse response = ContextAccess.getControllerResponse();
-//        a(response).shouldBeNull();
-//
-//        TemplateManager templateManager = Configuration.getTemplateManager();
-//
-//        a(templateManager.getValues().get("message").toString().contains("Cannot access action app.controllers.AbcPersonController.index " +
-//                "with HTTP method: 'POST' because it is configured for method: 'GET'")).shouldBeTrue();
-//    }
 }

@@ -26,7 +26,7 @@ import org.junit.Test;
  *
  * Created by igor on 4/22/14.
  */
-public class Issue155Spec extends AppIntegrationSpec  {
+public class Issue155Spec extends AppSpec  {
 
     @Before
     public void before() {

@@ -16,7 +16,7 @@ limitations under the License.
 
 package app.controllers;
 
-import org.javalite.activeweb.ControllerSpec;
+import org.javalite.activeweb.AppSpec;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ import org.junit.Test;
  *
  * @author Igor Polevoy
  */
-public class LinkToControllerSpec extends ControllerSpec {
+public class LinkToControllerSpec extends AppSpec {
 
     @Before
     public void before() {

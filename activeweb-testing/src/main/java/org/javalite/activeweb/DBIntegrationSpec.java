@@ -22,9 +22,15 @@ import org.junit.Before;
 /**
  * Use this as a super class for integration tests that requires a DB connection
  * to the test DB.
- * 
+ *
+ *
+ * <p>
+ *     <strong>Deprecated:</strong> use {@link AppSpec}.
+ * </p>
+ *
  * @author Igor Polevoy
  */
+@Deprecated
 public class DBIntegrationSpec extends IntegrationSpec{
 
     @Before

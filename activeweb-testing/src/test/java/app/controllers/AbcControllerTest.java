@@ -16,13 +16,13 @@ limitations under the License.
 
 package app.controllers;
 
-import org.javalite.activeweb.ControllerSpec;
+import org.javalite.activeweb.AppSpec;
 import org.junit.Test;
 
 /**
  * @author Igor Polevoy
  */
-public class AbcControllerTest extends ControllerSpec {
+public class AbcControllerTest extends AppSpec {
     @Override
     public void atStart() {
         //nothing

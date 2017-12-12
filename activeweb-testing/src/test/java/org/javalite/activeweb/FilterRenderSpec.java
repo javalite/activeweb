@@ -24,7 +24,7 @@ import org.junit.Test;
 /**
  * @author Igor Polevoy
  */
-public class FilterRenderSpec extends IntegrationSpec{
+public class FilterRenderSpec extends AppSpec{
 
     @Before
     public void before(){
