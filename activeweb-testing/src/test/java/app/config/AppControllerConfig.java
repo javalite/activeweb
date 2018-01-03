@@ -32,12 +32,7 @@ public class AppControllerConfig extends AbstractControllerConfig {
 
     public void init(AppContext appContext) {
         add(new TimingFilter(), new InjectionRedirectFilter());
-
-        //this filter will apply to the IncludeController
         add(new IncludeExcludeFilter()).exceptFor(ExcludeController.class);
-
-
         add(new IncludeExcludeActionFilter()).to(ExcludeActionController.class).excludeActions("exclude");
-
     }
 }

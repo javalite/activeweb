@@ -16,6 +16,8 @@ limitations under the License.
 
 package org.javalite.activeweb;
 
+import org.javalite.activeweb.annotations.IncludeFilters;
+import org.javalite.activeweb.annotations.NoRollback;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.mock.web.MockFilterConfig;
@@ -46,8 +48,11 @@ public abstract class AppIntegrationSpec extends IntegrationSpec{
 
     @Before
     public void beforeAppIntegrationSpec() throws ServletException {
-        requestDispatcher.init(new MockFilterConfig());
-        context = requestDispatcher.getContext();
+
+        if(!(this instanceof  AppSpec) ||  getClass().getAnnotation(IncludeFilters.class) != null){
+            requestDispatcher.init(new MockFilterConfig());
+            context = requestDispatcher.getContext();
+        }
 
         if(!suppressDb){
             DBSpecHelper.openTestConnections();

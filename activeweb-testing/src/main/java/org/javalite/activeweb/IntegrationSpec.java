@@ -69,7 +69,7 @@ public class IntegrationSpec extends RequestSpecHelper {
     }
 
     /**
-     * Adds a global filter for the duration of the current spec.
+     * Adds a global (for any controller) filter for the duration of the current spec.
      * If you want a clean  execution (just the filters you added), do not forget to run {@link #resetFilters()} method
      * before this one.
      *
@@ -80,4 +80,14 @@ public class IntegrationSpec extends RequestSpecHelper {
         Configuration.addFilter(filter);
     }
 
+    /**
+     * Convenience method. Calls {@link #addFilter(HttpSupportFilter)} for each argument.
+     *
+     * @param filters a number of filters to add to this test.
+     */
+    protected void addFilters(HttpSupportFilter ... filters){
+        for (HttpSupportFilter httpSupportFilter : filters) {
+            addFilter(httpSupportFilter);
+        }
+    }
 }

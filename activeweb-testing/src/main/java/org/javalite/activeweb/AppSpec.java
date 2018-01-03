@@ -85,9 +85,10 @@ public class AppSpec extends AppIntegrationSpec {
         }
 
         if (!getClass().getSimpleName().endsWith("ControllerSpec"))
-            throw new SpecException("Descendant of activeweb.ControllerSpec must be named with: controller name + 'Spec', " +
+            throw new SpecException("If a method request() is used, the spec class  must be named: controller name + 'Spec', " +
                     "and because controllers have to have a suffix 'Controller'," +
-                    " controller spec classes  must have a suffix: 'ControllerSpec' ");
+                    " controller spec classes  must have a suffix: 'ControllerSpec'. Additionally, the spec needs to be in the same " +
+                    "package with the tested controller. ");
 
         String temp = getClass().getName();//full name
         temp = temp.substring(16);

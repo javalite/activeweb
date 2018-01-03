@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Add annotation to the {@link AppSpec} decedents to prevent it from managing transactions.
+ * Add annotation to the {@link AppSpec} subclaasses to prevent it from managing transactions.
  * Normally, a transaction is opened on a start of and rolled back at the end of test.
  * This prevents leaking of data in the database across tests. Adding this annotation
  * to a class that inherits from {@link AppSpec} will disable this feature. Use with caution.

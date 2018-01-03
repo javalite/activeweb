@@ -76,6 +76,9 @@ public class RequestDispatcher implements Filter {
         initAppConfig(Configuration.getDbConfigClassName(), context, false);
     }
 
+    /**
+     * @return Instance of {@link AppContext}.
+     */
     public AppContext getContext() {
         return appContext;
     }

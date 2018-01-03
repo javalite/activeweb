@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Add annotation to the {@link AppSpec} decedents to avoid opening a DB connection for tests.
+ * Add annotation to the {@link AppSpec} subclasses to skip opening a DB connection for tests.
  *
  * @author igor on 12/9/17.
  */
