@@ -22,8 +22,8 @@ import app.controllers.StudentController;
 import app.controllers.TemplateIntegrationSpec;
 import app.controllers.level1.level2.RegistrationController;
 import org.javalite.activeweb.controller_filters.AppControllerFilter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy
@@ -43,7 +43,7 @@ public class FilterRequestPropertiesSpec extends TemplateIntegrationSpec {
         }
     }
 
-    @Before
+    @BeforeEach
     public void before() {
         super.before();
         filter = new MockFilter();

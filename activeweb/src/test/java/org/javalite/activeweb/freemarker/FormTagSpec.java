@@ -17,8 +17,8 @@ limitations under the License.
 package org.javalite.activeweb.freemarker;
 
 import org.javalite.test.jspec.JSpecSupport;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -34,7 +34,7 @@ public class FormTagSpec implements JSpecSupport {
 
     private FreeMarkerTemplateManager manager = new FreeMarkerTemplateManager();
 
-    @Before
+    @BeforeEach
     public void before() throws IOException {
         manager.setTemplateLocation("src/test/views");
     }

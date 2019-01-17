@@ -18,8 +18,8 @@ package org.javalite.activeweb.freemarker;
 
 import java.io.StringWriter;
 import java.util.Collections;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.javalite.test.jspec.JSpec.it;
 import static org.javalite.common.Collections.map;
@@ -32,7 +32,7 @@ public class WrapTagSpec {
     
     private FreeMarkerTemplateManager manager;
 
-    @Before
+    @BeforeEach
     public void setup() {        
         manager = new FreeMarkerTemplateManager();
         manager.setTemplateLocation("src/test/views");

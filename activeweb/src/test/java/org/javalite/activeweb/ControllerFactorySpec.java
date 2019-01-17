@@ -17,7 +17,7 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import org.javalite.test.jspec.ExceptionExpectation;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.javalite.test.jspec.JSpec.a;
 import static org.javalite.test.jspec.JSpec.expect;

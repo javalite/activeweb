@@ -1,6 +1,6 @@
 package org.javalite.activeweb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import java.io.IOException;

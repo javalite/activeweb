@@ -3,8 +3,8 @@ package org.javalite.async;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.javalite.async.services.GreetingModule;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +20,7 @@ public class AsyncBinarySpec {
     private static final String QUEUE_NAME = "queue1";
     private String filePath;
 
-    @Before
+    @BeforeEach
     public void before() throws IOException {
         filePath = Files.createTempDirectory("async").toFile().getCanonicalPath();
         HelloCommand.reset();

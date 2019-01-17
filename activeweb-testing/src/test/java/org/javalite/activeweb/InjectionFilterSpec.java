@@ -19,8 +19,8 @@ package org.javalite.activeweb;
 
 import app.services.RedirectorModule;
 import com.google.inject.Guice;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy
@@ -32,7 +32,7 @@ public class InjectionFilterSpec extends AppIntegrationSpec {
         suppressDb();
     }
 
-    @Before
+    @BeforeEach
     public void before(){
         setInjector(Guice.createInjector(new RedirectorModule()));
         setTemplateLocation("src/test/views");

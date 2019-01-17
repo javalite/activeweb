@@ -18,15 +18,15 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import org.javalite.test.XPathHelper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy
  */
 public class UploadControllerSpec extends IntegrationSpec{
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
     }

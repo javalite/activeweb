@@ -16,7 +16,7 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 
 /**
@@ -27,7 +27,7 @@ import org.junit.Before;
  */
 public class DBIntegrationSpec extends IntegrationSpec{
 
-    @Before
+    @BeforeEach
     public final void before(){
         DBSpecHelper.initDBConfig();
         DBSpecHelper.openTestConnections();

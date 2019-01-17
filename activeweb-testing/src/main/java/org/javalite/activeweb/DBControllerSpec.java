@@ -17,7 +17,7 @@ package org.javalite.activeweb;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.BeforeClass;
 
 /**
@@ -33,7 +33,7 @@ public class DBControllerSpec extends ControllerSpec {
         DBSpecHelper.initDBConfig();
     }    
 
-    @Before
+    @BeforeEach
     public final void open(){
         DBSpecHelper.openTestConnections();
     }

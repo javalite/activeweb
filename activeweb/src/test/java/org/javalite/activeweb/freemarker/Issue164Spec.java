@@ -16,7 +16,7 @@ limitations under the License.
 package org.javalite.activeweb.freemarker;
 
 import org.javalite.activeweb.RequestSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import java.io.IOException;

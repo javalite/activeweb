@@ -16,7 +16,7 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import static org.javalite.test.jspec.JSpec.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy

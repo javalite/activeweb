@@ -19,7 +19,7 @@ package org.javalite.activeweb;
 
 import org.javalite.test.jspec.JSpecSupport;
 import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -49,7 +49,7 @@ public abstract class RequestSpec implements JSpecSupport {
 
     protected MockFilterConfig config;
 
-    @Before
+    @BeforeEach
     public final void setup() throws ServletException, IOException, IllegalAccessException, InstantiationException {
         replaceError();
         dispatcher = new RequestDispatcher();

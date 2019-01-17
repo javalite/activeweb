@@ -3,8 +3,8 @@ package app.views;
 import app.controllers.AbcPersonController;
 import com.google.inject.Guice;
 import org.javalite.activeweb.ViewSpec;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.javalite.common.Collections.map;
 
@@ -13,7 +13,7 @@ import static org.javalite.common.Collections.map;
  */
 public class ViewSpecTest extends ViewSpec{
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
         setInjector(Guice.createInjector(new TagModule()));

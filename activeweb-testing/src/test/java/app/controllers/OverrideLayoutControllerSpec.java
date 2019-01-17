@@ -17,15 +17,15 @@ limitations under the License.
 package app.controllers;
 
 import org.javalite.activeweb.ControllerSpec;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy
  */
 public class OverrideLayoutControllerSpec extends ControllerSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
     }

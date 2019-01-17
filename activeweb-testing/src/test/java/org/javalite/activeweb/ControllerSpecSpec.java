@@ -19,7 +19,7 @@ package org.javalite.activeweb;
 import app.controllers.AbcControllerTest;
 import app.controllers.CookieControllerSpec;
 import app.controllers.test.HelloControllerSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.javalite.test.jspec.JSpec.a;
 

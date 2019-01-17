@@ -1,7 +1,7 @@
 package app.controllers;
 
 import org.javalite.activeweb.ControllerSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author igor on 11/29/16.

@@ -17,8 +17,8 @@ package org.javalite.activeweb;
 
 import app.controllers.AbcPersonController;
 import app.filters.UnconditionalRenderFilter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -26,7 +26,7 @@ import org.junit.Test;
  */
 public class FilterRenderSpec extends IntegrationSpec{
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
         addFilter(AbcPersonController.class, new UnconditionalRenderFilter());

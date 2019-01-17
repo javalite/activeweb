@@ -17,7 +17,7 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.mock.web.MockFilterConfig;
 
 import javax.servlet.ServletException;
@@ -39,7 +39,7 @@ public abstract class AppIntegrationSpec extends IntegrationSpec{
     private AppContext context;
     private RequestDispatcher requestDispatcher = new RequestDispatcher();
 
-    @Before
+    @BeforeEach
     public void beforeAppIntegrationSpec() throws ServletException {
         requestDispatcher.init(new MockFilterConfig());
         context = requestDispatcher.getContext();

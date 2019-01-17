@@ -7,8 +7,8 @@ import org.javalite.common.JsonHelper;
 import org.javalite.common.Util;
 import org.javalite.test.SystemStreamUtil;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -28,7 +28,7 @@ public class AsyncSpec {
     private static final String QUEUE_NAME = "queue1";
     private String filePath;
 
-    @Before
+    @BeforeEach
     public void before() throws IOException {
         filePath = Files.createTempDirectory("async").toFile().getCanonicalPath();
         HelloCommand.reset();

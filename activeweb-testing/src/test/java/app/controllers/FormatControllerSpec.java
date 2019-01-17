@@ -17,7 +17,7 @@ limitations under the License.
 
 package app.controllers;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by igor on 10/09/14

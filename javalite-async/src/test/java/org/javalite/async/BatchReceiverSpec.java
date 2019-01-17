@@ -1,8 +1,8 @@
 package org.javalite.async;
 
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.jms.JMSException;
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class BatchReceiverSpec {
     private static final String QUEUE_NAME = "queue1";
     private Async async;
 
-    @Before
+    @BeforeEach
     public void before() throws IOException {
         String filePath = Files.createTempDirectory("async").toFile().getCanonicalPath();
         async = new Async(filePath, false, new QueueConfig(QUEUE_NAME));

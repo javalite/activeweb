@@ -21,12 +21,11 @@ import org.javalite.test.jspec.TestException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.*;
 
-import static org.javalite.common.Util.blank;
 
 /**
  * This class is not used directly in applications.
@@ -35,7 +34,7 @@ import static org.javalite.common.Util.blank;
  */
 public class RequestSpecHelper extends SpecHelper{
 
-    @Before
+    @BeforeEach
     public final void atStart00(){
         Configuration.setTesting(true);
     }

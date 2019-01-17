@@ -22,8 +22,8 @@ import app.controllers.api.v2.AuthorsController;
 import org.javalite.common.JsonHelper;
 import org.javalite.common.Util;
 import org.javalite.test.SystemStreamUtil;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -39,7 +39,7 @@ public class RouterCustomSpec extends RequestSpec {
     private String nl = System.getProperty("line.separator");
 
 
-    @Before
+    @BeforeEach
     public void before1(){
         request.setMethod("GET");
     }

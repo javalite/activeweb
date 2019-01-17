@@ -5,8 +5,8 @@ import org.javalite.common.JsonHelper;
 import org.javalite.common.Util;
 import org.javalite.test.SystemStreamUtil;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class JSONLogSpec extends RequestSpec {
 
 
-    @Before
+    @BeforeEach
     public void before(){
         SystemStreamUtil.replaceOut();
         System.setProperty("activeweb.log.request", "true");

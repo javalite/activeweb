@@ -1,8 +1,8 @@
 package app.controllers;
 
 import org.javalite.activeweb.ControllerSpec;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy: 3/5/12 1:23 PM
@@ -10,7 +10,7 @@ import org.junit.Test;
 public class BlankParameterControllerSpec extends ControllerSpec {
 
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
     }

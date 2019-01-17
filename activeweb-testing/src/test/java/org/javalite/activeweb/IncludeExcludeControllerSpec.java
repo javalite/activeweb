@@ -2,15 +2,15 @@ package org.javalite.activeweb;
 
 import app.services.RedirectorModule;
 import com.google.inject.Guice;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy: 9/30/12 12:18 AM
  */
 public class IncludeExcludeControllerSpec extends AppIntegrationSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
         //this is simply needed to satisfy bootstrapping of the app, unrelated to this test, but will break if removed.

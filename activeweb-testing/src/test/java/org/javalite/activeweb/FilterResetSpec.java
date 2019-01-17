@@ -3,7 +3,7 @@ package org.javalite.activeweb;
 import app.controllers.AbcPersonController;
 import app.controllers.XyzController;
 import org.javalite.activeweb.controller_filters.HeadersLogFilter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author igor on 7/1/17.

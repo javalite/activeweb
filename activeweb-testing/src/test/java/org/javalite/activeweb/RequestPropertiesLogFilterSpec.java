@@ -20,8 +20,8 @@ package org.javalite.activeweb;
 import app.controllers.AbcPersonController;
 import app.controllers.TemplateIntegrationSpec;
 import org.javalite.activeweb.controller_filters.RequestPropertiesLogFilter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -31,7 +31,7 @@ import java.io.PrintStream;
  */
 public class RequestPropertiesLogFilterSpec extends TemplateIntegrationSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         addFilter(AbcPersonController.class, new RequestPropertiesLogFilter());
         super.before();

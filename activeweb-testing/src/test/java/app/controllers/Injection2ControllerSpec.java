@@ -23,15 +23,15 @@ import app.services.RedirectorImpl;
 import com.google.inject.Injector;
 import org.javalite.activeweb.AppIntegrationSpec;
 import org.javalite.activeweb.mocks.GreeterMock;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /** 
  * @author Igor Polevoy
  */
 public class Injection2ControllerSpec extends AppIntegrationSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         injector().bind(Greeter.class).to(GreeterMock.class)
                 .bind(Redirector.class).to(RedirectorImpl.class).create();

@@ -20,8 +20,8 @@ import freemarker.template.TemplateException;
 import org.javalite.test.XPathHelper;
 import org.javalite.test.jspec.JSpecSupport;
 import org.dom4j.DocumentException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class FreeMarkerTemplateManagerSpec implements JSpecSupport {
     //private Configuration cfg;
     FreeMarkerTemplateManager manager = new FreeMarkerTemplateManager();
 
-    @Before
+    @BeforeEach
     public void before() throws IOException {
         manager.setTemplateLocation("src/test/views");
     }

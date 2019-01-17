@@ -21,8 +21,8 @@ import org.javalite.common.Util;
 import org.javalite.test.SystemStreamUtil;
 import org.javalite.test.XPathHelper;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -44,7 +44,7 @@ public class RequestDispatcherSpec extends RequestSpec {
 
     private FilterChain badFilterChain;
 
-    @Before
+    @BeforeEach
     public void beforeStart() {
         filterChain = new FilterChain() {
             public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse) throws IOException, ServletException {

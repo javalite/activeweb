@@ -4,8 +4,8 @@ import org.javalite.activejdbc.connection_config.ConnectionJdbcSpec;
 import org.javalite.activejdbc.connection_config.ConnectionJndiSpec;
 import org.javalite.activejdbc.connection_config.ConnectionSpecWrapper;
 import org.javalite.activejdbc.connection_config.DbConfiguration;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import static org.javalite.test.jspec.JSpec.the;
  */
 public class AbstractConnectionBuilderSpec  {
 
-    @Before
+    @BeforeEach
     public void before(){
         DbConfiguration.resetConnectionWrappers();
     }

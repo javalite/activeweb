@@ -19,8 +19,8 @@ package org.javalite.activeweb;
 
 import app.services.RedirectorModule;
 import com.google.inject.Guice;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class Issue155Spec extends AppIntegrationSpec  {
 
-    @Before
+    @BeforeEach
     public void before() {
         setInjector(Guice.createInjector(new RedirectorModule()));
     }

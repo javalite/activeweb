@@ -23,9 +23,11 @@ import org.javalite.activeweb.controller_filters.HeadersLogFilter;
 import org.javalite.activeweb.controller_filters.HttpSupportFilter;
 import org.javalite.activeweb.controller_filters.TimingFilter;
 import org.javalite.activeweb.mock.*;
+import org.javalite.test.jspec.ExceptionExpectation;
+import org.javalite.test.jspec.JSpec;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterConfig;
 
 import javax.servlet.ServletException;
@@ -42,7 +44,7 @@ public class AbstractControllerConfigSpec  extends RequestSpec{
 
     private AbstractControllerConfig config;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Configuration.setFilterConfig(new MockFilterConfig());
         OutputCollector.reset();
@@ -349,20 +351,25 @@ public class AbstractControllerConfigSpec  extends RequestSpec{
         a(Configuration.getFilters().size()).shouldBeEqual(2); // we added the same filter twice!
     }
 
-    @Test(expected =IllegalArgumentException.class)
+    @Test
     public void shouldPreventRegisteringTheSameFilterMoreThanOnce() {
-        //create mock config
-        config = new AbstractControllerConfig() {
-            public void init(AppContext context) {
-                HeadersLogFilter filter = new HeadersLogFilter();
-                add(filter);
-                add(filter);
-            }
-        };
+        JSpec.expect(new ExceptionExpectation<IllegalArgumentException>(IllegalArgumentException.class) {
+            @Override
+            public void exec() {
+                //create mock config
+                config = new AbstractControllerConfig() {
+                    public void init(AppContext context) {
+                        HeadersLogFilter filter = new HeadersLogFilter();
+                        add(filter);
+                        add(filter);
+                    }
+                };
 
-        //init config.
-        config.init(new AppContext());
-        config.completeInit();
+                //init config.
+                config.init(new AppContext());
+                config.completeInit();
+            }
+        });
     }
 
     @Test

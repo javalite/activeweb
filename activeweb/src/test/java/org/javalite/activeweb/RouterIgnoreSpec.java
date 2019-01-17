@@ -1,8 +1,8 @@
 package org.javalite.activeweb;
 
 import app.config.RouteConfig;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class RouterIgnoreSpec extends RequestSpec  {
 
-    @Before
+    @BeforeEach
     public void before() throws InstantiationException, IllegalAccessException, ServletException, IOException {
         RouteConfig rc = new RouteConfig();
         rc.init(new AppContext());

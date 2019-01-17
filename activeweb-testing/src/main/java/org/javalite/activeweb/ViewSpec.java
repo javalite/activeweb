@@ -6,7 +6,7 @@ import org.javalite.activeweb.freemarker.ContentTL;
 import org.javalite.activeweb.freemarker.FreeMarkerTag;
 import org.javalite.activeweb.freemarker.FreeMarkerTemplateManager;
 import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -33,7 +33,7 @@ public abstract class ViewSpec extends SpecHelper {
     }
 
 
-    @Before
+    @BeforeEach
     public final void beforeTest(){
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setContextPath("/test_context");

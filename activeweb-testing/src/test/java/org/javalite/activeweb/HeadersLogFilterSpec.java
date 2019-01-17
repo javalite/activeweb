@@ -22,8 +22,8 @@ import org.javalite.activeweb.controller_filters.AbstractLoggingFilter;
 import org.javalite.activeweb.controller_filters.HeadersLogFilter;
 import app.controllers.AbcPersonController;
 import org.javalite.test.SystemStreamUtil;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -34,7 +34,7 @@ import java.io.PrintStream;
  */
 public class HeadersLogFilterSpec extends TemplateIntegrationSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         addFilter(AbcPersonController.class, new HeadersLogFilter(AbstractLoggingFilter.Level.INFO, true));
         super.before();

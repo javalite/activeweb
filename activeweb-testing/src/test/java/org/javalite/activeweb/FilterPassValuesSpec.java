@@ -19,15 +19,15 @@ package org.javalite.activeweb;
 
 import app.controllers.AbcPersonController;
 import app.filters.PassValueFilter;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Igor Polevoy
  */
 public class FilterPassValuesSpec  extends IntegrationSpec{
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
         addFilter(AbcPersonController.class, new PassValueFilter());

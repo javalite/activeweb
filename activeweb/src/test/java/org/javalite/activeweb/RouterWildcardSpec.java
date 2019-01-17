@@ -17,8 +17,8 @@ limitations under the License.
 package org.javalite.activeweb;
 
 import app.controllers.WildcardRouteController;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.UnsupportedEncodingException;
 
@@ -31,7 +31,7 @@ public class RouterWildcardSpec extends RequestSpec {
 
     AbstractRouteConfig routeConfig;
 
-    @Before
+    @BeforeEach
     public void before1(){
         request.setMethod("GET");
     }

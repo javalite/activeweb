@@ -19,8 +19,8 @@ package app.controllers;
 import org.javalite.activeweb.ControllerException;
 import org.javalite.activeweb.ControllerSpec;
 import org.javalite.activeweb.freemarker.UserTag;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests SessionTagController
@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class SessionControllerSpec extends ControllerSpec {
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
         registerTag("user", new UserTag());

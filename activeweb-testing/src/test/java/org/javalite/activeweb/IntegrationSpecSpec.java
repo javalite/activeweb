@@ -15,8 +15,8 @@ limitations under the License.
 */
 package org.javalite.activeweb;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -25,7 +25,7 @@ import org.junit.Test;
 public class IntegrationSpecSpec extends IntegrationSpec {
 
 
-    @Before
+    @BeforeEach
     public void before(){
         setTemplateLocation("src/test/views");
     }

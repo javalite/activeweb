@@ -17,7 +17,7 @@ package org.javalite.activeweb;
 
 
 import org.javalite.activeweb.ControllerSpec;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 /**

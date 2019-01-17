@@ -18,7 +18,7 @@ package org.javalite.activeweb.freemarker;
 
 import org.javalite.test.jspec.JSpecSupport;
 import org.javalite.activeweb.freemarker.TagFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 
