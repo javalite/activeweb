@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/activeweb/activeweb.iml" filepath="$PROJECT_DIR$/activeweb/activeweb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/activeweb-lessc-integration-test/activeweb-lessc-integration-test.iml" filepath="$PROJECT_DIR$/activeweb-lessc-integration-test/activeweb-lessc-integration-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/activeweb-lessc/activeweb-lessc-maven-plugin.iml" filepath="$PROJECT_DIR$/activeweb-lessc/activeweb-lessc-maven-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/activeweb-root.iml" filepath="$PROJECT_DIR$/activeweb-root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/activeweb-testing/activeweb-testing.iml" filepath="$PROJECT_DIR$/activeweb-testing/activeweb-testing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/async-pool-test/async-pool-test.iml" filepath="$PROJECT_DIR$/async-pool-test/async-pool-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/javalite-async/javalite-async.iml" filepath="$PROJECT_DIR$/javalite-async/javalite-async.iml" />
+    </modules>
+  </component>
+</project>

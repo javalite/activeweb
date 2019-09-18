@@ -1,1 +1,0 @@
-<@link_to >ABC Person</@link_to>

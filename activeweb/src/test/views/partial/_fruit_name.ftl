@@ -1,1 +1,0 @@
-and the fruit name is: ${a_fruit}

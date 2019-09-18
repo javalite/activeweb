@@ -1,1 +1,0 @@
-<@form controller="simple" action="index" method="post" html_id="formA"/>

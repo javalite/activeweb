@@ -1,1 +1,0 @@
-<@message key="meeting" param0="Wednesday" param1="2:00 PM"/>

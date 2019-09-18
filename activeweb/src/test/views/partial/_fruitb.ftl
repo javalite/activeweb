@@ -1,1 +1,0 @@
-and the fruit is: ${fruitb} and the count is: ${fruitb_counter}   

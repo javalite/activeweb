@@ -1,1 +1,0 @@
-<@link_to controller="admin.home"> this is a body</@link_to>

@@ -1,0 +1,990 @@
+Index: activeweb-testing/src/main/java/org/javalite/activeweb/SpecHelper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\nhttp://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n*/\npackage org.javalite.activeweb;\n\n\nimport com.google.inject.AbstractModule;\nimport com.google.inject.Guice;\nimport com.google.inject.Injector;\nimport com.google.inject.Module;\nimport com.google.inject.util.Modules;\nimport org.javalite.activeweb.freemarker.FreeMarkerTag;\nimport org.javalite.activeweb.freemarker.FreeMarkerTemplateManager;\nimport org.javalite.common.Convert;\nimport org.javalite.test.jspec.JSpecSupport;\nimport org.junit.After;\nimport org.junit.Before;\nimport org.springframework.mock.web.MockFilterConfig;\nimport org.springframework.mock.web.MockHttpServletResponse;\nimport org.springframework.mock.web.MockHttpSession;\n\nimport java.io.Serializable;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Map;\n\nimport static org.javalite.common.Collections.list;\n\n/**\n * This class is not used directly in applications.\n *\n * @author Igor Polevoy\n */\npublic class SpecHelper implements JSpecSupport{\n\n    private SessionTestFacade sessionFacade;\n\n\n    @Before\n    public void atStart() {\n        sessionFacade = new SessionTestFacade(new MockHttpSession());\n        setTemplateLocation(\"src/main/webapp/WEB-INF/views\");//default location of all views\n\n        RequestContext.setTLs(null, new MockHttpServletResponse(), new MockFilterConfig(),\n                new AppContext(), new RequestVo(), null);\n\n    }\n\n    @After\n    public void afterEnd(){\n        RequestContext.clear();\n    }\n\n    /**\n     * @param location this is a relative location starting from the module root, intended for testing.\n     */\n    protected void setTemplateLocation(String location){\n        Configuration.getTemplateManager().setTemplateLocation(location);\n    }\n\n\n    /**\n     * Convenience method: allows to set services without explicitly configuring a new module for mocking.\n     * All services are set as \"eagerSingleton\".\n     *\n     * <p>Example:</p>\n     *\n     * <pre>\n     * public void before(){\n     *    injector().bind(Greeter.class).to(GreeterMock.class)\n     *              .bind(Redirector.class).to(RedirectorImpl.class).create();\n     * }\n     * </pre>\n     *\n     * <p>\n     *An example where the first class is also an implementation:\n     * </p>\n     *\n     * <pre>\n     * public void before(){\n     *    injector().bind(Greeter.class).create();\n     * }\n     * </pre>\n\n     *\n     * The instance of a new injector will also be added to the current context and used to inject\n     * services into filters and controllers executing by this test.\n     * <p>\n     *     Each test method can potentially setup its own injector like this, and not interfere with previous settings.\n     * </p>\n     *\n     * If you need more advanced settings, use {@link #createInjector(AbstractModule)} or {@link #setInjector(Injector)} methods.\n     *\n     * @return instance of dynamically created injector with interfaces and services already set.\n     */\n    protected DynamicBuilder injector(){\n        return new DynamicBuilder();\n    }\n\n    protected class DynamicBuilder{\n        List<List<Class>> pairs = new ArrayList<>();\n\n        /**\n         * @param interfaceClass class of an interface for Guice injector\n         */\n        public DynamicBuilder bind(Class interfaceClass){\n            pairs.add(list(interfaceClass));\n            return this;\n        }\n\n        /**\n         * This method is optional. If omitted, the  class provided for the interface to {@link #bind(Class)}\n         * method will be used as implementation as well.\n         *\n         * @param implementationClass implementation of an interface for Guice injector\n         */\n        public DynamicBuilder to(Class implementationClass){\n            pairs.get(pairs.size() - 1).add(implementationClass);\n            return this;\n        }\n\n        public Injector create(){\n            DynamicModule dynamicModule = new DynamicModule(pairs);\n            Injector injector = Guice.createInjector(dynamicModule);\n            SpecHelper.this.setInjector(injector);\n            return injector;\n        }\n    }\n\n    private class DynamicModule extends AbstractModule{\n        private List<List<Class>> pairs = new ArrayList<>();\n\n        public DynamicModule(List<List<Class>> pairs) {\n            this.pairs = pairs;\n        }\n\n        @Override\n        protected void configure() {\n            for (List<Class> pair : pairs) {\n                if(pair.size() == 1){\n                    bind(pair.get(0)).asEagerSingleton();\n                }else {\n                    bind(pair.get(0)).to(pair.get(1)).asEagerSingleton();\n                }\n            }\n        }\n    }\n\n    /**\n     * Use to set injector for current test.\n     * <p>\n     *     How to override some services for tests:\n     *\n     *     <pre>\n     *         Injector injector  = Guice.createInjector(Modules.override(new CommonModule()).with(new CommonModuleMock());\n     *         setInjector(injector);\n     *     </pre>\n     * </p>\n     *\n     * @param injector injector to source dependencies form.\n     */\n    protected void setInjector(Injector injector){\n        Configuration.setInjector(injector);\n    }\n\n    /**\n     * This is a convenience  method for setting Guice modules and service mocks.\n     *\n     * <p>\n     *     For instance, consider this code:\n     *\n     *     <pre>\n     *         Injector injector  = Guice.createInjector(Modules.override(new CommonModule()).with(new CommonModuleMock());\n     *         setInjector(injector);\n     *     </pre>\n     *\n     *     The mock classes are specified  inside  the  class <code>CommonModuleMock</code>, which means that you\n     *     have to write the module class. This process is tedious and inflexible in a large project.\n     *</p>\n     * <p>\n     *     The <code>createInjector(..)</code> method allows for a more elegant way of overriding real services with mocks:\n     *     <pre>\n     *         Injector injector = createInjector(new CommonModule())\n     *                                          .override(EmailService.class).with(EmailServiceMock.class)\n     *                                          .override(SmsService.class).with(SmsServiceMock.class).\n     *                                          .create();\n     *         setInjector(injector);\n     *     </pre>\n     *\n     *      As you can see, the is no longer need for writing  a mock module.\n\n     * </p>\n     *\n     * @param module - main module you want to set on a spec. This module may include services you need to override.\n     *\n     * @return instance of Injector with services in the main module overridden by provided mocks.\n     */\n    protected <T extends AbstractModule> ModuleBuilder createInjector(T module){\n        return new ModuleBuilder(module);\n    }\n\n    public class ModuleBuilder{\n\n        private List<Class> interfaceClasses = new ArrayList<>();\n        private List<Class> mockClasses = new ArrayList<>();\n        private Module module;\n\n        protected ModuleBuilder(Module module) {\n            this.module = module;\n        }\n\n        /**\n         * Specifies what interface to override with a mock.\n         *\n         * @param interfaceClass class of an service interface  to override by a mock.\n         * @return instance of {@link ModuleBuilder}\n         */\n        public ModuleBuilder override(Class interfaceClass){\n            interfaceClasses.add(interfaceClass);\n            return this;\n        }\n\n        /**\n         * Specifies what mock to use to override a real service in a module.\n         *\n         * @param mockClass a mock service class to override a real service in the module as eager singletone.\n         * @return instance of {@link ModuleBuilder}\n         */\n        public ModuleBuilder with(Class mockClass){\n            mockClasses.add(mockClass);\n            return this;\n        }\n\n        private class MockModule extends AbstractModule {\n            private Class  interfaceClass, mockClass;\n\n            private MockModule(Class interfaceClass, Class mockClass) {\n                this.interfaceClass = interfaceClass;\n                this.mockClass = mockClass;\n            }\n\n            @Override @SuppressWarnings(\"unchecked\")\n            protected void configure() {\n                bind(interfaceClass).to(mockClass).asEagerSingleton();\n            }\n        };\n\n        /**\n         * Terminal method of a builder. Use to generate an instance of  Injector.\n         *\n         * @return properly configured instance of injector, with all\n         */\n        public Injector create(){\n            List<Module> modules = new ArrayList<>();\n            for (int i = 0; i < interfaceClasses.size(); i++) {\n                modules.add(new MockModule(interfaceClasses.get(i), mockClasses.get(i) ));\n            }\n            return Guice.createInjector(Modules.override(module).with(modules));\n        }\n    }\n\n\n\n    /**\n     * Registers a single custom tag. You can call this method as many times as necessary to register multiple tags in tests.\n     * If you want to use all tags that you registered in <code>app.config.AppBootstrap</code> class, then you an\n     * option of using <code>AppIntegrationSpec</code> as a super class.\n     *\n     * @param name tag name where name is a part of the tag on page like so: <code><@name...</code>.\n     * @param tag instance of tag to register.\n     */\n    protected void registerTag(String name, FreeMarkerTag tag){\n        ((FreeMarkerTemplateManager)Configuration.getTemplateManager()).registerTag(name, tag);\n    }\n\n\n    /**\n     * Allows access to session in test context.\n     *\n     * @return object allowing access to session in test context.\n     */\n    protected SessionTestFacade session(){\n        return sessionFacade;\n    }\n\n\n    /**\n     * Returns a named flash value assigned to session by controller.\n     *\n     * @param name name of flash value.\n     * @return flash value assigned to session by controller.\n     */\n    protected Object flash(String name){\n        if(session().get(\"flasher\") == null)\n            return null;\n\n        Map flasher = (Map) session().get(\"flasher\");\n        return flasher.get(name) == null? null :flasher.get(name);\n    }\n\n    /**\n     * Tests if flash by name exists.\n     *\n     * @param name name in question\n     * @return true if flash exists, false if not. Will return <code>true</code> even if flash by name exists,\n     * but its value is <code>null</code>.\n     */\n    protected Object flashExists(String name){\n        Map flasher = (Map) session().get(\"flasher\");\n        return flasher != null && flasher.containsKey(name);\n    }\n\n    /**\n     * Returns a named flash value assigned to session by controller.\n     *\n     * @param name name of flash value.\n     * @param type type to be returned\n     * @return flash value assigned to session by controller.\n     */\n    protected  <T>  T flash(String name, Class<T> type){\n        return (T) flash(name);\n    }\n\n\n    /**\n     * Convenience method, sets an object on a session. Equivalent of:\n     * <pre>\n     * <code>\n     *     session().put(name, value)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @param value object itself.\n     */\n    protected void session(String name, Serializable value){\n        session().put(name, value);\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object,\n     * @return session object.\n     */\n    protected Object sessionObject(String name){\n        return session().get(name);\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     String val = (String)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected String sessionString(String name){\n        return (String)session().get(name);\n    }\n\n\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     Integer val = (Integer)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected Integer sessionInteger(String name){\n        return Convert.toInteger(session().get(name));\n    }\n\n\n    /**\n     * Returns object from session that is already cast to expected type.\n     *\n     * @param name name of object in session\n     * @param type expected type.\n     * @return object from session that is already cast to expected type.\n     */\n    protected  <T>  T session(String name, Class<T> type){\n        return (T) session().get(name);\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     Boolean val = (Boolean)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected Boolean sessionBoolean(String name){\n        return Convert.toBoolean(session().get(name));\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     Double val = (Double)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected Double sessionDouble(String name){\n        return Convert.toDouble(session().get(name));\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     Float val = (Float)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected Float sessionFloat(String name){\n        return Convert.toFloat(session().get(name));\n    }\n\n    /**\n     * Convenience method, returns object from session, equivalent of:\n     * <pre>\n     * <code>\n     *     Long val = (Long)session().get(name)\n     * </code>\n     * </pre>\n     *\n     * @param name name of object\n     * @return value\n     */\n    protected Long sessionLong(String name){\n        return Convert.toLong(session().get(name));\n    }\n\n    /**\n     * Returns true if session has named object, false if not.\n     *\n     * @param name name of object.\n     * @return true if session has named object, false if not.\n     */\n    protected boolean sessionHas(String name){\n        return session().get(name) != null;\n\n    }\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb-testing/src/main/java/org/javalite/activeweb/SpecHelper.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb-testing/src/main/java/org/javalite/activeweb/SpecHelper.java	(date 1547133311000)
+@@ -27,7 +27,6 @@
+ import org.javalite.test.jspec.JSpecSupport;
+ import org.junit.After;
+ import org.junit.Before;
+-import org.springframework.mock.web.MockFilterConfig;
+ import org.springframework.mock.web.MockHttpServletResponse;
+ import org.springframework.mock.web.MockHttpSession;
+ 
+Index: activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockFilterConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockFilterConfig.java	(date 1547133555000)
++++ activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockFilterConfig.java	(date 1547133555000)
+@@ -0,0 +1,94 @@
++package org.javalite.activeweb.mock.spring;
++
++
++
++import java.util.Collections;
++import java.util.Enumeration;
++import java.util.LinkedHashMap;
++import java.util.Map;
++import javax.servlet.FilterConfig;
++import javax.servlet.ServletContext;
++
++import org.springframework.util.Assert;
++
++/**
++ *
++ * NOTE: below is based on the same class from the Spring framework.
++ *
++ * Mock implementation of the {@link javax.servlet.FilterConfig} interface.
++ *
++ * <p>Used for testing the web framework; also useful for testing
++ * custom {@link javax.servlet.Filter} implementations.
++ *
++ * @author Juergen Hoeller
++ */
++public class MockFilterConfig implements FilterConfig {
++
++    private final ServletContext servletContext;
++
++    private final String filterName;
++
++    private final Map<String, String> initParameters = new LinkedHashMap<>();
++
++
++    /**
++     * Create a new MockFilterConfig with a default {@link MockServletContext}.
++     */
++    public MockFilterConfig() {
++        this(null, "");
++    }
++
++    /**
++     * Create a new MockFilterConfig with a default {@link MockServletContext}.
++     * @param filterName the name of the filter
++     */
++    public MockFilterConfig(String filterName) {
++        this(null, filterName);
++    }
++
++    /**
++     * Create a new MockFilterConfig.
++     * @param servletContext the ServletContext that the servlet runs in
++     */
++    public MockFilterConfig(ServletContext servletContext) {
++        this(servletContext, "");
++    }
++
++    /**
++     * Create a new MockFilterConfig.
++     * @param servletContext the ServletContext that the servlet runs in
++     * @param filterName the name of the filter
++     */
++    public MockFilterConfig(ServletContext servletContext, String filterName) {
++        this.servletContext = (servletContext != null ? servletContext : new MockServletContext());
++        this.filterName = filterName;
++    }
++
++
++    @Override
++    public String getFilterName() {
++        return this.filterName;
++    }
++
++    @Override
++    public ServletContext getServletContext() {
++        return this.servletContext;
++    }
++
++    public void addInitParameter(String name, String value) {
++        Assert.notNull(name, "Parameter name must not be null");
++        this.initParameters.put(name, value);
++    }
++
++    @Override
++    public String getInitParameter(String name) {
++        Assert.notNull(name, "Parameter name must not be null");
++        return this.initParameters.get(name);
++    }
++
++    @Override
++    public Enumeration<String> getInitParameterNames() {
++        return Collections.enumeration(this.initParameters.keySet());
++    }
++
++}
+\ No newline at end of file
+Index: activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockServletContext.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockServletContext.java	(date 1547204955000)
++++ activeweb/src/test/java/org/javalite/activeweb/mock/spring/MockServletContext.java	(date 1547204955000)
+@@ -0,0 +1,695 @@
++package org.javalite.activeweb.mock.spring;
++/*
++ * Copyright 2002-2018 the original author or authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import java.io.File;
++import java.io.IOException;
++import java.io.InputStream;
++import java.net.MalformedURLException;
++import java.net.URL;
++import java.util.Collections;
++import java.util.Enumeration;
++import java.util.EventListener;
++import java.util.HashMap;
++import java.util.LinkedHashMap;
++import java.util.LinkedHashSet;
++import java.util.Map;
++import java.util.Set;
++import javax.servlet.Filter;
++import javax.servlet.FilterRegistration;
++import javax.servlet.RequestDispatcher;
++import javax.servlet.Servlet;
++import javax.servlet.ServletContext;
++import javax.servlet.ServletException;
++import javax.servlet.ServletRegistration;
++import javax.servlet.SessionCookieConfig;
++import javax.servlet.SessionTrackingMode;
++import javax.servlet.descriptor.JspConfigDescriptor;
++
++import org.apache.commons.logging.Log;
++import org.apache.commons.logging.LogFactory;
++
++import org.springframework.core.io.DefaultResourceLoader;
++import org.springframework.core.io.Resource;
++import org.springframework.core.io.ResourceLoader;
++import org.springframework.util.Assert;
++import org.springframework.util.ClassUtils;
++import org.springframework.util.MimeType;
++import org.springframework.util.ObjectUtils;
++import org.springframework.util.StringUtils;
++
++/**
++ * This class is borrowed from Spring framework
++ *
++ * Mock implementation of the {@link javax.servlet.ServletContext} interface.
++ *
++ * <p>As of Spring 5.0, this set of mocks is designed on a Servlet 4.0 baseline.
++ *
++ * <p>Compatible with Servlet 3.1 but can be configured to expose a specific version
++ * through {@link #setMajorVersion}/{@link #setMinorVersion}; default is 3.1.
++ * Note that Servlet 3.1 support is limited: servlet, filter and listener
++ * registration methods are not supported; neither is JSP configuration.
++ * We generally do not recommend to unit test your ServletContainerInitializers and
++ * WebApplicationInitializers which is where those registration methods would be used.
++ *
++ * <p>For setting up a full {@code WebApplicationContext} in a test environment, you can
++ * use {@code AnnotationConfigWebApplicationContext}, {@code XmlWebApplicationContext},
++ * or {@code GenericWebApplicationContext}, passing in a corresponding
++ * {@code MockServletContext} instance. Consider configuring your
++ * {@code MockServletContext} with a {@code FileSystemResourceLoader} in order to
++ * interpret resource paths as relative filesystem locations.
++ *
++ * @author Rod Johnson
++ * @author Juergen Hoeller
++ * @author Sam Brannen
++ * @see #MockServletContext(org.springframework.core.io.ResourceLoader)
++ */
++public class MockServletContext implements ServletContext {
++
++    /** Default Servlet name used by Tomcat, Jetty, JBoss, and GlassFish: {@value}. */
++    private static final String COMMON_DEFAULT_SERVLET_NAME = "default";
++
++    private static final String TEMP_DIR_SYSTEM_PROPERTY = "java.io.tmpdir";
++
++    private static final Set<SessionTrackingMode> DEFAULT_SESSION_TRACKING_MODES = new LinkedHashSet<>(4);
++
++    static {
++        DEFAULT_SESSION_TRACKING_MODES.add(SessionTrackingMode.COOKIE);
++        DEFAULT_SESSION_TRACKING_MODES.add(SessionTrackingMode.URL);
++        DEFAULT_SESSION_TRACKING_MODES.add(SessionTrackingMode.SSL);
++    }
++
++
++    private final Log logger = LogFactory.getLog(getClass());
++
++    private final ResourceLoader resourceLoader;
++
++    private final String resourceBasePath;
++
++    private String contextPath = "";
++
++    private final Map<String, ServletContext> contexts = new HashMap<>();
++
++    private int majorVersion = 3;
++
++    private int minorVersion = 1;
++
++    private int effectiveMajorVersion = 3;
++
++    private int effectiveMinorVersion = 1;
++
++    private final Map<String, RequestDispatcher> namedRequestDispatchers = new HashMap<>();
++
++    private String defaultServletName = COMMON_DEFAULT_SERVLET_NAME;
++
++    private final Map<String, String> initParameters = new LinkedHashMap<>();
++
++    private final Map<String, Object> attributes = new LinkedHashMap<>();
++
++    private String servletContextName = "MockServletContext";
++
++    private final Set<String> declaredRoles = new LinkedHashSet<>();
++
++    private Set<SessionTrackingMode> sessionTrackingModes;
++
++    private int sessionTimeout;
++
++    
++    private String requestCharacterEncoding;
++
++    private String responseCharacterEncoding;
++
++
++    /**
++     * Create a new {@code MockServletContext}, using no base path and a
++     * {@link DefaultResourceLoader} (i.e. the classpath root as WAR root).
++     * @see org.springframework.core.io.DefaultResourceLoader
++     */
++    public MockServletContext() {
++        this("", null);
++    }
++
++    /**
++     * Create a new {@code MockServletContext}, using a {@link DefaultResourceLoader}.
++     * @param resourceBasePath the root directory of the WAR (should not end with a slash)
++     * @see org.springframework.core.io.DefaultResourceLoader
++     */
++    public MockServletContext(String resourceBasePath) {
++        this(resourceBasePath, null);
++    }
++
++    /**
++     * Create a new {@code MockServletContext}, using the specified {@link ResourceLoader}
++     * and no base path.
++     * @param resourceLoader the ResourceLoader to use (or null for the default)
++     */
++    public MockServletContext(ResourceLoader resourceLoader) {
++        this("", resourceLoader);
++    }
++
++    /**
++     * Create a new {@code MockServletContext} using the supplied resource base
++     * path and resource loader.
++
++     * {@literal 'default'}.
++     * @param resourceBasePath the root directory of the WAR (should not end with a slash)
++     * @param resourceLoader the ResourceLoader to use (or null for the default)
++     * @see #registerNamedDispatcher
++     */
++    public MockServletContext(String resourceBasePath, ResourceLoader resourceLoader) {
++        this.resourceLoader = (resourceLoader != null ? resourceLoader : new DefaultResourceLoader());
++        this.resourceBasePath = resourceBasePath;
++
++        // Use JVM temp dir as ServletContext temp dir.
++        String tempDir = System.getProperty(TEMP_DIR_SYSTEM_PROPERTY);
++        if (tempDir != null) {
++            this.attributes.put("TEMP_DIR_CONTEXT_ATTRIBUTE", new File(tempDir));
++        }
++}
++
++    /**
++     * Build a full resource location for the given path, prepending the resource
++     * base path of this {@code MockServletContext}.
++     * @param path the path as specified
++     * @return the full resource path
++     */
++    protected String getResourceLocation(String path) {
++        if (!path.startsWith("/")) {
++            path = "/" + path;
++        }
++        return this.resourceBasePath + path;
++    }
++
++    public void setContextPath(String contextPath) {
++        this.contextPath = contextPath;
++    }
++
++    @Override
++    public String getContextPath() {
++        return this.contextPath;
++    }
++
++    public void registerContext(String contextPath, ServletContext context) {
++        this.contexts.put(contextPath, context);
++    }
++
++    @Override
++    public ServletContext getContext(String contextPath) {
++        if (this.contextPath.equals(contextPath)) {
++            return this;
++        }
++        return this.contexts.get(contextPath);
++    }
++
++    public void setMajorVersion(int majorVersion) {
++        this.majorVersion = majorVersion;
++    }
++
++    @Override
++    public int getMajorVersion() {
++        return this.majorVersion;
++    }
++
++    public void setMinorVersion(int minorVersion) {
++        this.minorVersion = minorVersion;
++    }
++
++    @Override
++    public int getMinorVersion() {
++        return this.minorVersion;
++    }
++
++    public void setEffectiveMajorVersion(int effectiveMajorVersion) {
++        this.effectiveMajorVersion = effectiveMajorVersion;
++    }
++
++    @Override
++    public int getEffectiveMajorVersion() {
++        return this.effectiveMajorVersion;
++    }
++
++    public void setEffectiveMinorVersion(int effectiveMinorVersion) {
++        this.effectiveMinorVersion = effectiveMinorVersion;
++    }
++
++    @Override
++    public int getEffectiveMinorVersion() {
++        return this.effectiveMinorVersion;
++    }
++
++
++
++
++
++    public Set<String> getResourcePaths(String path) {
++        String actualPath = (path.endsWith("/") ? path : path + "/");
++        Resource resource = this.resourceLoader.getResource(getResourceLocation(actualPath));
++        try {
++            File file = resource.getFile();
++            String[] fileList = file.list();
++            if (ObjectUtils.isEmpty(fileList)) {
++                return null;
++            }
++            Set<String> resourcePaths = new LinkedHashSet<>(fileList.length);
++            for (String fileEntry : fileList) {
++                String resultPath = actualPath + fileEntry;
++                if (resource.createRelative(fileEntry).getFile().isDirectory()) {
++                    resultPath += "/";
++                }
++                resourcePaths.add(resultPath);
++            }
++            return resourcePaths;
++        }
++        catch (IOException ex) {
++            if (logger.isWarnEnabled()) {
++                logger.warn("Could not get resource paths for " + resource, ex);
++            }
++            return null;
++        }
++    }
++
++    @Override
++    @Nullable
++    public URL getResource(String path) throws MalformedURLException {
++        Resource resource = this.resourceLoader.getResource(getResourceLocation(path));
++        if (!resource.exists()) {
++            return null;
++        }
++        try {
++            return resource.getURL();
++        }
++        catch (MalformedURLException ex) {
++            throw ex;
++        }
++        catch (IOException ex) {
++            if (logger.isWarnEnabled()) {
++                logger.warn("Could not get URL for " + resource, ex);
++            }
++            return null;
++        }
++    }
++
++    @Override
++    public InputStream getResourceAsStream(String path) {
++        Resource resource = this.resourceLoader.getResource(getResourceLocation(path));
++        if (!resource.exists()) {
++            return null;
++        }
++        try {
++            return resource.getInputStream();
++        }
++        catch (IOException ex) {
++            if (logger.isWarnEnabled()) {
++                logger.warn("Could not open InputStream for " + resource, ex);
++            }
++            return null;
++        }
++    }
++
++    @Override
++    public RequestDispatcher getRequestDispatcher(String path) {
++        Assert.isTrue(path.startsWith("/"),
++                () -> "RequestDispatcher path [" + path + "] at ServletContext level must start with '/'");
++        return new MockRequestDispatcher(path);
++    }
++
++    @Override
++    public RequestDispatcher getNamedDispatcher(String path) {
++        return this.namedRequestDispatchers.get(path);
++    }
++
++    /**
++     * Register a {@link RequestDispatcher} (typically a {@link MockRequestDispatcher})
++     * that acts as a wrapper for the named Servlet.
++     * @param name the name of the wrapped Servlet
++     * @param requestDispatcher the dispatcher that wraps the named Servlet
++     * @see #getNamedDispatcher
++     * @see #unregisterNamedDispatcher
++     */
++    public void registerNamedDispatcher(String name, RequestDispatcher requestDispatcher) {
++        Assert.notNull(name, "RequestDispatcher name must not be null");
++        Assert.notNull(requestDispatcher, "RequestDispatcher must not be null");
++        this.namedRequestDispatchers.put(name, requestDispatcher);
++    }
++
++    /**
++     * Unregister the {@link RequestDispatcher} with the given name.
++     * @param name the name of the dispatcher to unregister
++     * @see #getNamedDispatcher
++     * @see #registerNamedDispatcher
++     */
++    public void unregisterNamedDispatcher(String name) {
++        Assert.notNull(name, "RequestDispatcher name must not be null");
++        this.namedRequestDispatchers.remove(name);
++    }
++
++    /**
++     * Get the name of the <em>default</em> {@code Servlet}.
++     * <p>Defaults to {@literal 'default'}.
++     * @see #setDefaultServletName
++     */
++    public String getDefaultServletName() {
++        return this.defaultServletName;
++    }
++
++    /**
++     * Set the name of the <em>default</em> {@code Servlet}.
++     * <p>Also {@link #unregisterNamedDispatcher unregisters} the current default
++     * {@link RequestDispatcher} and {@link #registerNamedDispatcher replaces}
++     * it with a {@link MockRequestDispatcher} for the provided
++     * {@code defaultServletName}.
++     * @param defaultServletName the name of the <em>default</em> {@code Servlet};
++     * never {@code null} or empty
++     * @see #getDefaultServletName
++     */
++    public void setDefaultServletName(String defaultServletName) {
++        Assert.hasText(defaultServletName, "defaultServletName must not be null or empty");
++        unregisterNamedDispatcher(this.defaultServletName);
++        this.defaultServletName = defaultServletName;
++        registerNamedDispatcher(this.defaultServletName, new MockRequestDispatcher(this.defaultServletName));
++    }
++
++    @Deprecated
++    @Override
++    @Nullable
++    public Servlet getServlet(String name) {
++        return null;
++    }
++
++    @Override
++    @Deprecated
++    public Enumeration<Servlet> getServlets() {
++        return Collections.enumeration(Collections.emptySet());
++    }
++
++    @Override
++    @Deprecated
++    public Enumeration<String> getServletNames() {
++        return Collections.enumeration(Collections.emptySet());
++    }
++
++    @Override
++    public void log(String message) {
++        logger.info(message);
++    }
++
++    @Override
++    @Deprecated
++    public void log(Exception ex, String message) {
++        logger.info(message, ex);
++    }
++
++    @Override
++    public void log(String message, Throwable ex) {
++        logger.info(message, ex);
++    }
++
++    @Override
++    @Nullable
++    public String getRealPath(String path) {
++        Resource resource = this.resourceLoader.getResource(getResourceLocation(path));
++        try {
++            return resource.getFile().getAbsolutePath();
++        }
++        catch (IOException ex) {
++            if (logger.isWarnEnabled()) {
++                logger.warn("Could not determine real path of resource " + resource, ex);
++            }
++            return null;
++        }
++    }
++
++    @Override
++    public String getServerInfo() {
++        return "MockServletContext";
++    }
++
++    @Override
++    public String getInitParameter(String name) {
++        Assert.notNull(name, "Parameter name must not be null");
++        return this.initParameters.get(name);
++    }
++
++    @Override
++    public Enumeration<String> getInitParameterNames() {
++        return Collections.enumeration(this.initParameters.keySet());
++    }
++
++    @Override
++    public boolean setInitParameter(String name, String value) {
++        Assert.notNull(name, "Parameter name must not be null");
++        if (this.initParameters.containsKey(name)) {
++            return false;
++        }
++        this.initParameters.put(name, value);
++        return true;
++    }
++
++    public void addInitParameter(String name, String value) {
++        Assert.notNull(name, "Parameter name must not be null");
++        this.initParameters.put(name, value);
++    }
++
++    @Override
++    @Nullable
++    public Object getAttribute(String name) {
++        Assert.notNull(name, "Attribute name must not be null");
++        return this.attributes.get(name);
++    }
++
++    @Override
++    public Enumeration<String> getAttributeNames() {
++        return Collections.enumeration(new LinkedHashSet<>(this.attributes.keySet()));
++    }
++
++    @Override
++    public void setAttribute(String name, Object value) {
++        Assert.notNull(name, "Attribute name must not be null");
++        if (value != null) {
++            this.attributes.put(name, value);
++        }
++        else {
++            this.attributes.remove(name);
++        }
++    }
++
++    @Override
++    public void removeAttribute(String name) {
++        Assert.notNull(name, "Attribute name must not be null");
++        this.attributes.remove(name);
++    }
++
++    public void setServletContextName(String servletContextName) {
++        this.servletContextName = servletContextName;
++    }
++
++    @Override
++    public String getServletContextName() {
++        return this.servletContextName;
++    }
++
++    @Override
++    @Nullable
++    public ClassLoader getClassLoader() {
++        return ClassUtils.getDefaultClassLoader();
++    }
++
++    @Override
++    public void declareRoles(String... roleNames) {
++        Assert.notNull(roleNames, "Role names array must not be null");
++        for (String roleName : roleNames) {
++            Assert.hasLength(roleName, "Role name must not be empty");
++            this.declaredRoles.add(roleName);
++        }
++    }
++
++    public Set<String> getDeclaredRoles() {
++        return Collections.unmodifiableSet(this.declaredRoles);
++    }
++
++    @Override
++    public void setSessionTrackingModes(Set<SessionTrackingMode> sessionTrackingModes)
++            throws IllegalStateException, IllegalArgumentException {
++        this.sessionTrackingModes = sessionTrackingModes;
++    }
++
++    @Override
++    public Set<SessionTrackingMode> getDefaultSessionTrackingModes() {
++        return DEFAULT_SESSION_TRACKING_MODES;
++    }
++
++    @Override
++    public Set<SessionTrackingMode> getEffectiveSessionTrackingModes() {
++        return (this.sessionTrackingModes != null ?
++                Collections.unmodifiableSet(this.sessionTrackingModes) : DEFAULT_SESSION_TRACKING_MODES);
++    }
++
++    @Override
++    public SessionCookieConfig getSessionCookieConfig() {
++        return this.sessionCookieConfig;
++    }
++
++    @Override  // on Servlet 4.0
++    public void setSessionTimeout(int sessionTimeout) {
++        this.sessionTimeout = sessionTimeout;
++    }
++
++    @Override  // on Servlet 4.0
++    public int getSessionTimeout() {
++        return this.sessionTimeout;
++    }
++
++    @Override  // on Servlet 4.0
++    public void setRequestCharacterEncoding(String requestCharacterEncoding) {
++        this.requestCharacterEncoding = requestCharacterEncoding;
++    }
++
++    @Override  // on Servlet 4.0
++    @Nullable
++    public String getRequestCharacterEncoding() {
++        return this.requestCharacterEncoding;
++    }
++
++    @Override  // on Servlet 4.0
++    public void setResponseCharacterEncoding(String responseCharacterEncoding) {
++        this.responseCharacterEncoding = responseCharacterEncoding;
++    }
++
++    @Override  // on Servlet 4.0
++    @Nullable
++    public String getResponseCharacterEncoding() {
++        return this.responseCharacterEncoding;
++    }
++
++
++    //---------------------------------------------------------------------
++    // Unsupported Servlet 3.0 registration methods
++    //---------------------------------------------------------------------
++
++    @Override
++    public JspConfigDescriptor getJspConfigDescriptor() {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override  // on Servlet 4.0
++    public ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public ServletRegistration.Dynamic addServlet(String servletName, String className) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public ServletRegistration.Dynamic addServlet(String servletName, Servlet servlet) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public ServletRegistration.Dynamic addServlet(String servletName, Class<? extends Servlet> servletClass) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public <T extends Servlet> T createServlet(Class<T> c) throws ServletException {
++        throw new UnsupportedOperationException();
++    }
++
++    /**
++     * This method always returns {@code null}.
++     * @see javax.servlet.ServletContext#getServletRegistration(java.lang.String)
++     */
++    @Override
++    @Nullable
++    public ServletRegistration getServletRegistration(String servletName) {
++        return null;
++    }
++
++    /**
++     * This method always returns an {@linkplain Collections#emptyMap empty map}.
++     * @see javax.servlet.ServletContext#getServletRegistrations()
++     */
++    @Override
++    public Map<String, ? extends ServletRegistration> getServletRegistrations() {
++        return Collections.emptyMap();
++    }
++
++    @Override
++    public FilterRegistration.Dynamic addFilter(String filterName, String className) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public FilterRegistration.Dynamic addFilter(String filterName, Filter filter) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public FilterRegistration.Dynamic addFilter(String filterName, Class<? extends Filter> filterClass) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public <T extends Filter> T createFilter(Class<T> c) throws ServletException {
++        throw new UnsupportedOperationException();
++    }
++
++    /**
++     * This method always returns {@code null}.
++     * @see javax.servlet.ServletContext#getFilterRegistration(java.lang.String)
++     */
++    @Override
++    @Nullable
++    public FilterRegistration getFilterRegistration(String filterName) {
++        return null;
++    }
++
++    /**
++     * This method always returns an {@linkplain Collections#emptyMap empty map}.
++     * @see javax.servlet.ServletContext#getFilterRegistrations()
++     */
++    @Override
++    public Map<String, ? extends FilterRegistration> getFilterRegistrations() {
++        return Collections.emptyMap();
++    }
++
++    @Override
++    public void addListener(Class<? extends EventListener> listenerClass) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public void addListener(String className) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public <T extends EventListener> void addListener(T t) {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public <T extends EventListener> T createListener(Class<T> c) throws ServletException {
++        throw new UnsupportedOperationException();
++    }
++
++    @Override
++    public String getVirtualServerName() {
++        throw new UnsupportedOperationException();
++    }
++
++}
+\ No newline at end of file
+Index: activeweb/src/test/java/org/javalite/activeweb/RouterRestfulSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\n\npackage org.javalite.activeweb;\n\nimport org.junit.Before;\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\nimport static org.javalite.test.jspec.JSpec.a;\n\n/**\n * @author Igor Polevoy\n */\n@SuppressWarnings({\"JavaDoc\"})\npublic class RouterRestfulSpec {\n\n    Router r = new Router(\"home\");\n    @Before\n    public void before(){\n        Configuration.setFilterConfig(new MockFilterConfig());\n    }\n\n\n    /**\n     * GET \t/photos \t            index \t        display a list of all photos\n     */\n    @Test\n    public void shouldRecognizeRestfulRouteIndex() throws ClassLoadException {\n        Router r = new Router(null);\n        Route mr = r.recognize(\"/photos\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n    }\n\n\n    @Test\n    public void shouldRecognizeRestfulRouteIndexForControllerInPackage() throws ClassLoadException {\n        Router r = new Router(null);\n        Route mr = r.recognize(\"/admin/special/special_rest\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special.SpecialRestController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n    }\n\n\n    /**\n     * GET \t/photos/new_form \t    new_form        return an HTML form for creating a new photo\n     */\n    @Test\n    public void shouldRecognizeRestfulRouteNewForm() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos/new_form\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"new_form\");\n    }\n\n    @Test\n    public void shouldRecognizeRestfulRouteNewFormForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special2/special2_rest/new_form\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.Special2RestController\");\n        a(mr.getActionName()).shouldBeEqual(\"new_form\");\n    }\n\n    /**\n     * POST \t/photos \t            create \t        create a new photo\n     */\n    @Test\n    public void shouldRecognizeRestfulRouteCreate() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos\", HttpMethod.POST);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"create\");\n    }\n\n    @Test\n    public void shouldRecognizeRestfulRouteCreateForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special2/special2_rest\", HttpMethod.POST);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.Special2RestController\");\n        a(mr.getActionName()).shouldBeEqual(\"create\");\n    }\n\n\n    //GET \t/photos/id \t        show            display a specific photo\n    @Test\n    public void shouldRecognizeRestfulRouteShow() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos/1\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"show\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n    @Test\n    public void shouldRecognizeRestfulRouteShowForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special/special_rest/1\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special.SpecialRestController\");\n        a(mr.getActionName()).shouldBeEqual(\"show\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    //GET \t/photos/id/edit_form   edit_form \t    return an HTML form for editing a photo\n    @Test\n    public void shouldRecognizeRestfulRouteEditForm() throws ClassLoadException {\n        \n        Route mr = r.recognize(\"/photos/1/edit_form\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"edit_form\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    @Test\n    public void shouldRecognizeRestfulRouteEditFormForControllerInPackage() throws ClassLoadException {\n        Route mr = r.recognize(\"/admin/special/special_rest/1/edit_form\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special.SpecialRestController\");\n        a(mr.getActionName()).shouldBeEqual(\"edit_form\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    //PUT \t/photos/id \t        update          update a specific photo\n    @Test\n    public void shouldRecognizeRestfulRouteUpdate() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos/1\", HttpMethod.PUT);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"update\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n\n    @Test\n    public void shouldRecognizeRestfulRouteUpdateForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special2/special3/special3_rest/1\", HttpMethod.PUT);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.special3.Special3RestController\");\n        a(mr.getActionName()).shouldBeEqual(\"update\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    //DELETE \t/photos/:id \t        destroy         delete a specific photo\n    @Test\n    public void shouldRecognizeRestfulRouteDestroy() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos/1\", HttpMethod.DELETE);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"destroy\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    @Test\n    public void shouldRecognizeRestfulRouteDestroyForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special2/special3/special3_rest/1\", HttpMethod.DELETE);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.special3.Special3RestController\");\n        a(mr.getActionName()).shouldBeEqual(\"destroy\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n\n    //OPTIONS \t/photos/\n    @Test\n    public void shouldRecognizeRestfulRouteOPTIONS() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/photos\", HttpMethod.OPTIONS);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.PhotosController\");\n        a(mr.getActionName()).shouldBeEqual(\"options\");\n    }\n\n    @Test\n    public void shouldRecognizeRestfulRouteOPTIONSForControllerInPackage() throws ClassLoadException {\n\n        Route mr = r.recognize(\"/admin/special2/special3/special3_rest/\", HttpMethod.OPTIONS);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.special3.Special3RestController\");\n        a(mr.getActionName()).shouldBeEqual(\"options\");\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/RouterRestfulSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/RouterRestfulSpec.java	(date 1547133555000)
+@@ -16,9 +16,9 @@
+ 
+ package org.javalite.activeweb;
+ 
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.junit.Before;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
+ 
+ import static org.javalite.test.jspec.JSpec.a;
+ 
+Index: activeweb/src/test/java/org/javalite/activeweb/ControllerPackageLocatorSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\n\npackage org.javalite.activeweb;\n\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\nimport java.io.File;\nimport java.util.ArrayList;\nimport java.util.List;\n\nimport static org.javalite.test.jspec.JSpec.a;\n\n/**\n * @author Igor Polevoy\n */\npublic class ControllerPackageLocatorSpec {\n\n\n    @Test\n    public void shouldDiscoverPackagesInDirectories(){\n        List<String> controllerPackages =  ControllerPackageLocator.locateControllerPackages(new MockFilterConfig());\n        a(controllerPackages.contains(\"admin\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special2\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special2.special3\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special\")).shouldBeTrue();\n        a(controllerPackages.contains(\"rest\")).shouldBeTrue();\n    }\n\n\n    @Test\n    public void shouldDiscoverPackagesInJars(){\n\n\n        File jar = new File(\"src/test/resources/test.jar\");\n\n        List<String> controllerPackages = new ArrayList<>();\n\n        ControllerPackageLocator.discoverInJar(jar, controllerPackages);\n\n        a(controllerPackages.contains(\"admin\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special2\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special2.special3\")).shouldBeTrue();\n        a(controllerPackages.contains(\"admin.special\")).shouldBeTrue();\n    }\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/ControllerPackageLocatorSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/ControllerPackageLocatorSpec.java	(date 1547133555000)
+@@ -16,8 +16,9 @@
+ 
+ package org.javalite.activeweb;
+ 
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
++
+ 
+ import java.io.File;
+ import java.util.ArrayList;
+Index: activeweb/src/test/java/org/javalite/activeweb/RouteGenerationSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\npackage org.javalite.activeweb;\n\nimport app.controllers.BookController;\nimport app.controllers.VehicleRegistrationController;\nimport app.controllers.admin.special2.special3.Special3Controller;\nimport org.javalite.test.jspec.JSpecSupport;\nimport org.junit.Before;\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\nimport java.util.HashMap;\n\nimport static org.javalite.common.Collections.map;\n\n/**\n * @author Igor Polevoy\n */\npublic class RouteGenerationSpec implements JSpecSupport {\n\n    @Before\n    public void before(){\n        Configuration.setFilterConfig(new MockFilterConfig());\n    }\n\n    @Test\n    public void shouldGenerateSimpleStandardRoutes(){\n        \n        String uri = Router.generate(\"/books\", \"show\", \"123\", false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/show/123?format=json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", \"show\", \"123\", false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/show/123?format=json&stage=1\");\n\n        uri = Router.generate(\"/books\", \"show\", null, false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/show?format=json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", \"show\", null, false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/show?format=json&stage=1\");\n        \n        uri = Router.generate(\"/books\", null, \"123\", false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/123?format=json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", null, \"123\", false, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/123?format=json&stage=1\");\n\n        uri = Router.generate(\"/books\", null, null, false, map(\"format\", \"simple json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books?format=simple+json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", null, null, false, map(\"format\", \"simple json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books?format=simple+json&stage=1\");\n\n        uri = Router.generate(\"/books\", null, null, false, new HashMap());\n        a(uri).shouldBeEqual(\"/books\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", null, null, false, new HashMap());\n        a(uri).shouldBeEqual(\"/books\");\n    }\n\n    @Test(expected = IllegalArgumentException.class)\n    public void shouldFailIfIllegalActionNameProvidedForRestfulController(){\n        Router.generate(\"books\", \"illegal_action_name\", \"123\", true, new HashMap());\n    }\n\n    @Test(expected = IllegalArgumentException.class)\n    public void shouldFailIfIdProvidedToNewFormActionOfRestfulController(){\n        Router.generate(\"books\", \"new_form\", \"123\", true, new HashMap());\n    }\n\n    @Test(expected = IllegalArgumentException.class)\n    public void shouldFailIfIdNotProvidedToEditFormActionOfRestfulController(){\n        Router.generate(\"books\", \"edit_form\", null, true, new HashMap());\n    }\n\n    @Test\n    public void shouldGenerateSimpleRestfulRoutes(){\n\n        String uri = Router.generate(\"/books\", \"new_form\", null, true, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/new_form?format=json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", \"new_form\", null, true, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/new_form?format=json&stage=1\");\n\n        uri = Router.generate(\"/books\", \"edit_form\", \"123\", true, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/123/edit_form?format=json&stage=1\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", \"edit_form\", \"123\", true, map(\"format\", \"json\", \"stage\", 1));\n        a(uri).shouldBeEqual(\"/books/123/edit_form?format=json&stage=1\");\n\n        uri = Router.generate(\"/books\", null, null, true, new HashMap());\n        a(uri).shouldBeEqual(\"/books\");\n\n        //this is to support legacy \"controller name\"\n        uri = Router.generate(\"books\", null, null, true, new HashMap());\n        a(uri).shouldBeEqual(\"/books\");\n    }\n\n\n    @Test(expected = ControllerException.class)\n    public void shouldThrowExceptionIfControllerNameDoesNotEndWithController(){\n\n        class NotGoodControllerName extends AppController{}\n        NotGoodControllerName controller = new NotGoodControllerName();\n        Router.getControllerPath(controller.getClass());\n    }\n\n    @Test\n    public void shouldProvideCorrectControllerName(){\n\n        VehicleRegistrationController controller = new VehicleRegistrationController();\n        a(Router.getControllerPath(controller.getClass())).shouldBeEqual(\"/vehicle_registration\");\n    }\n\n\n      @Test\n    public void shouldGenerateSimpleControllerPath(){\n        a(Router.getControllerPath(BookController.class)).shouldBeEqual(\"/book\");\n    }\n\n    @Test\n    public void shouldGenerateComplexControllerPath(){\n        a(Router.getControllerPath(Special3Controller.class)).shouldBeEqual(\"/admin/special2/special3/special_3\");\n    }\n}\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/RouteGenerationSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/RouteGenerationSpec.java	(date 1547133555000)
+@@ -18,10 +18,10 @@
+ import app.controllers.BookController;
+ import app.controllers.VehicleRegistrationController;
+ import app.controllers.admin.special2.special3.Special3Controller;
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.javalite.test.jspec.JSpecSupport;
+ import org.junit.Before;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
+ 
+ import java.util.HashMap;
+ 
+Index: activeweb/src/test/java/org/javalite/activeweb/RouterStandardSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\n\npackage org.javalite.activeweb;\n\nimport org.junit.Before;\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\nimport static org.javalite.test.jspec.JSpec.a;\n\n/**\n * @author Igor Polevoy\n */\npublic class RouterStandardSpec {\n\n    private Router router = new Router(\"home\");\n\n\n    @Before\n    public void before() {\n        Configuration.setFilterConfig(new MockFilterConfig());\n    }\n\n    @Test\n    public void shouldMatchRootRoute() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.HomeController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n    }\n\n    @Test\n    public void shouldNotFindRouteIfControllerNotProvidedAndUriIsRoot() throws ClassLoadException {\n\n        Router router = new Router(null);\n        a(router.recognize(\"/\", HttpMethod.GET)).shouldBeNull();\n    }\n\n    /*\n         STANDARD:\n         ANY           /controller  -> defaults to index();\n         ANY           /controller/action\n         ANY           /controller/action/id/\n     */\n    @Test\n    public void shouldRecognizeStandardRouteWithControllerActionAndId() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/home/copy/1/\", HttpMethod.DELETE);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.HomeController\");\n        a(mr.getActionName()).shouldBeEqual(\"copy\");\n        a(mr.getId()).shouldBeEqual(\"1\");\n    }\n\n    //ANY    /controller/action                     {}\n    @Test\n    public void shouldRecognizeStandardRouteWithControllerAction() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/home/copy\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.HomeController\");\n        a(mr.getActionName()).shouldBeEqual(\"copy\");\n        a(mr.getId()).shouldBeNull();\n    }\n\n\n    //ANY    /controller/\n    @Test\n    public void shouldRecognizeStandardRouteWithDefaultAction() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/home\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.HomeController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n        a(mr.getId()).shouldBeNull();\n    }\n\n    @Test\n    public void shouldRecognizeStandardRouteWithDefaultActionForControllerInSubPackage() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/admin/permissions\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.PermissionsController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n        a(mr.getId()).shouldBeNull();\n    }\n\n    @Test\n    public void shouldRecognizeStandardRouteWithDefaultActionForControllerIn2ndLevelSubPackage() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/admin/special/special\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special.SpecialController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n        a(mr.getId()).shouldBeNull();\n    }\n\n    @Test\n    public void shouldRecognizeStandardRouteWithDefaultActionForControllerIn3rdLevelSubPackage() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/admin/special2/special3/special3\", HttpMethod.GET);\n\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.admin.special2.special3.Special3Controller\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n        a(mr.getId()).shouldBeNull();\n    }\n\n    @Test\n    public void shouldRecognizeStandardWithMethodHEAD() throws ClassLoadException {\n\n        Route mr = router.recognize(\"/\", HttpMethod.HEAD);\n        a(mr.getControllerClassName()).shouldBeEqual(\"app.controllers.HomeController\");\n        a(mr.getActionName()).shouldBeEqual(\"index\");\n        a(mr.getId()).shouldBeNull();\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/RouterStandardSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/RouterStandardSpec.java	(date 1547133311000)
+@@ -18,7 +18,6 @@
+ 
+ import org.junit.Before;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
+ 
+ import static org.javalite.test.jspec.JSpec.a;
+ 
+Index: activeweb/src/test/java/org/javalite/activeweb/RequestSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\n\nhttp://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.\n*/\n\npackage org.javalite.activeweb;\n\n\nimport org.javalite.test.jspec.JSpecSupport;\nimport org.junit.After;\nimport org.junit.Before;\nimport org.springframework.mock.web.MockFilterConfig;\nimport org.springframework.mock.web.MockHttpServletRequest;\nimport org.springframework.mock.web.MockHttpServletResponse;\n\nimport javax.servlet.FilterChain;\nimport javax.servlet.ServletException;\nimport javax.servlet.ServletRequest;\nimport javax.servlet.ServletResponse;\nimport java.io.IOException;\n\nimport static org.javalite.test.SystemStreamUtil.replaceError;\nimport static org.javalite.test.SystemStreamUtil.restoreSystemErr;\n\n/**\n * @author Igor Polevoy\n */\npublic abstract class RequestSpec implements JSpecSupport {\n\n    protected FilterChain filterChain = new FilterChain() {\n        public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse) throws IOException, ServletException {\n\n        }\n    };\n    protected RequestDispatcher dispatcher;\n    protected MockHttpServletRequest request;\n    protected MockHttpServletResponse response;\n\n    protected MockFilterConfig config;\n\n    @Before\n    public final void setup() throws ServletException, IOException, IllegalAccessException, InstantiationException {\n        replaceError();\n        dispatcher = new RequestDispatcher();\n        request = new MockHttpServletRequest();\n        request.setContextPath(\"/test_context\");\n        dispatcher.init(new MockFilterConfig());\n        response = new MockHttpServletResponse();\n        config = new MockFilterConfig();\n        RequestContext.clear();\n        Configuration.setFilterConfig(new MockFilterConfig());\n        RequestContext.setTLs(request, response, config, new AppContext(), new RequestVo(), null);\n        Configuration.getTemplateManager().setTemplateLocation(\"src/test/views\");\n    }\n\n    @After\n    public void tearDown(){\n        restoreSystemErr();\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/RequestSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/RequestSpec.java	(date 1547133555000)
+@@ -17,10 +17,10 @@
+ package org.javalite.activeweb;
+ 
+ 
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.javalite.test.jspec.JSpecSupport;
+ import org.junit.After;
+ import org.junit.Before;
+-import org.springframework.mock.web.MockFilterConfig;
+ import org.springframework.mock.web.MockHttpServletRequest;
+ import org.springframework.mock.web.MockHttpServletResponse;
+ 
+Index: activeweb/src/test/java/org/javalite/activeweb/RouterControllerPathSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\n\npackage org.javalite.activeweb;\n\nimport org.junit.Before;\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\n\nimport static org.javalite.test.jspec.JSpec.a;\n\n/**\n * @author Igor Polevoy\n */\npublic class RouterControllerPathSpec {\n\n    Router router = new Router(\"home\");\n      @Before\n    public void before(){\n        Configuration.setFilterConfig(new MockFilterConfig());\n    }\n\n    @Test\n    public void shouldFindHomeControllerFromPath() {\n        a(router.getControllerPath(\"/\").getControllerName()).shouldBeEqual(\"home\");\n        a(router.getControllerPath(\"/\").getControllerPackage()).shouldBeNull();\n        a(router.getControllerPath(\"/hello\").getControllerName()).shouldBeEqual(\"hello\");\n        a(router.getControllerPath(\"/hello\").getControllerPackage()).shouldBeNull();\n    }\n\n    @Test\n    public void shouldFindSpecifiedControllerFromPath() {\n\n        a(router.getControllerPath(\"/hello\").getControllerName()).shouldBeEqual(\"hello\");\n        a(router.getControllerPath(\"/hello\").getControllerPackage()).shouldBeNull();\n    }\n\n\n    @Test\n    public void shouldFindControllerInSubPackage() {\n        ControllerPath controllerPath = router.getControllerPath(\"/admin/db\");\n        a(controllerPath.getControllerPackage()).shouldBeEqual(\"admin\");\n        a(controllerPath.getControllerName()).shouldBeEqual(\"db\");\n    }\n\n    @Test\n    public void shouldFindControllerInSubPackageWithPeriodInPath() {\n        ControllerPath controllerPath = router.getControllerPath(\"/v1.0/service\");\n        a(controllerPath.getControllerPackage()).shouldBeEqual(\"v1_0\");\n        a(controllerPath.getControllerName()).shouldBeEqual(\"service\");\n    }\n\n    @Test\n    public void shouldFindControllerInSubPackageWithTrailingSlash() {\n\n        ControllerPath path = router.getControllerPath(\"/admin/db/\");\n        a(path.getControllerPackage()).shouldBeEqual(\"admin\");\n        a(path.getControllerName()).shouldBeEqual(\"db\");\n    }\n\n    @Test\n    public void shouldFindControllerInDeepSubPackage() {\n\n        ControllerPath path = router.getControllerPath(\"/admin/special/db\");\n        a(path.getControllerPackage()).shouldBeEqual(\"admin.special\");\n        a(path.getControllerName()).shouldBeEqual(\"db\");\n    }\n\n    @Test(expected = ControllerException.class)\n    public void shouldFailNoControllerProvided() {\n        router.getControllerPath(\"/admin/\");//this should fail because \"admin\" package exists, and\n        //no controller is specified after.\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/RouterControllerPathSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/RouterControllerPathSpec.java	(date 1547133555000)
+@@ -16,9 +16,9 @@
+ 
+ package org.javalite.activeweb;
+ 
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.junit.Before;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
+ 
+ 
+ import static org.javalite.test.jspec.JSpec.a;
+Index: activeweb/src/test/java/app/controllers/ControllerRunnerController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\n\npackage app.controllers;\n\nimport org.javalite.activeweb.AppController;\n\n/**\n * @author Igor Polevoy\n */\npublic class ControllerRunnerController extends AppController {\n\n    public void index(){\n        session().put(\"name\", \"john\");\n    }\n\n    public void passParams(){\n        \n    }\n\n    public void passAttributes(){\n\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/app/controllers/ControllerRunnerController.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/app/controllers/ControllerRunnerController.java	(date 1547255305000)
+@@ -25,6 +25,7 @@
+ 
+     public void index(){
+         session().put("name", "john");
++        assign();
+     }
+ 
+     public void passParams(){
+Index: activeweb/src/test/java/org/javalite/activeweb/AbstractControllerConfigSpec.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\nCopyright 2009-2016 Igor Polevoy\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); \nyou may not use this file except in compliance with the License. \nYou may obtain a copy of the License at \n\nhttp://www.apache.org/licenses/LICENSE-2.0 \n\nUnless required by applicable law or agreed to in writing, software \ndistributed under the License is distributed on an \"AS IS\" BASIS, \nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. \nSee the License for the specific language governing permissions and \nlimitations under the License. \n*/\npackage org.javalite.activeweb;\n\nimport app.controllers.CustomController;\nimport app.controllers.DoFiltersController;\nimport app.controllers.HomeController;\nimport org.javalite.activeweb.controller_filters.DBConnectionFilter;\nimport org.javalite.activeweb.controller_filters.HeadersLogFilter;\nimport org.javalite.activeweb.controller_filters.HttpSupportFilter;\nimport org.javalite.activeweb.controller_filters.TimingFilter;\nimport org.javalite.activeweb.mock.*;\nimport org.junit.After;\nimport org.junit.Before;\nimport org.junit.Test;\nimport org.springframework.mock.web.MockFilterConfig;\n\nimport javax.servlet.ServletException;\nimport java.io.IOException;\nimport java.util.List;\n\nimport static org.javalite.activeweb.mock.OutputCollector.getLine;\n\n\n/**\n * @author Igor Polevoy\n */\npublic class AbstractControllerConfigSpec  extends RequestSpec{\n\n    private AbstractControllerConfig config;\n\n    @Before\n    public void setUp() throws Exception {\n        Configuration.setFilterConfig(new MockFilterConfig());\n        OutputCollector.reset();\n    }\n\n    @After\n    public void tearDown(){\n        Configuration.resetFilters();\n    }\n\n\n    @Test\n    public void shouldAddGlobalFilters() {\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext config) {\n                add(new AbcFilter());\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        List<HttpSupportFilter> filter = Configuration.getFilters();\n\n        a(filter.size()).shouldBeEqual(1);\n        a(filter.get(0).getClass()).shouldBeTheSameAs(AbcFilter.class);\n    }\n\n    @Test\n    public void shouldAddControllerFilters() {\n        final AbcFilter filter1 = new AbcFilter();\n        final XyzFilter filter2 = new XyzFilter();\n        final LogFilter filter3 = new LogFilter();\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(filter1, filter2).to(PersonController.class, BookController.class);\n                add(filter3).to(LibraryController.class);\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n\n        List<HttpSupportFilter> filters= Configuration.getFilters();\n        //assert order:\n        the(filters.size()).shouldBeEqual(3);\n        the(filters.get(0)).shouldBeTheSameAs(filter1);\n        the(filters.get(1)).shouldBeTheSameAs(filter2);\n        the(filters.get(2)).shouldBeTheSameAs(filter3);\n\n        //lets check the matches:\n        the(matches(filters.get(0), new PersonController(), \"\")).shouldBeTrue();\n        the(matches(filters.get(0), new BookController(), \"\")).shouldBeTrue();\n\n        the(matches(filters.get(1), new PersonController(), \"\")).shouldBeTrue();\n        the(matches(filters.get(1), new BookController(), \"\")).shouldBeTrue();\n\n        the(matches(filters.get(2), new LibraryController(), \"\")).shouldBeTrue();\n\n        //lets check the non-matches:\n        the(matches(filters.get(0), new LibraryController(), \"\")).shouldBeFalse();\n        the(matches(filters.get(1), new LibraryController(), \"\")).shouldBeFalse();\n        the(matches(filters.get(2), new PersonController(), \"\")).shouldBeFalse();\n        the(matches(filters.get(2), new BookController(), \"\")).shouldBeFalse();\n    }\n\n    @Test\n    public void shouldMatchGlobalFiltersToSpecializedControllers() {\n        final AbcFilter filter1 = new AbcFilter();\n        final XyzFilter filter2 = new XyzFilter();\n        final LogFilter filter3 = new LogFilter();\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(filter1, filter2);\n                add(filter3).to(LibraryController.class);\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n\n        List<HttpSupportFilter> filters= Configuration.getFilters();\n        //assert order:\n        the(filters.size()).shouldBeEqual(3);\n        the(filters.get(0)).shouldBeTheSameAs(filter1);\n        the(filters.get(1)).shouldBeTheSameAs(filter2);\n        the(filters.get(2)).shouldBeTheSameAs(filter3);\n\n        //lets check the wildcard matches (some random controller):\n        the(matches(filters.get(0), new PersonController(), \"\")).shouldBeTrue();\n        the(matches(filters.get(0), new BookController(), \"\")).shouldBeTrue();\n\n        the(matches(filters.get(1), new PersonController(), \"\")).shouldBeTrue();\n        the(matches(filters.get(1), new BookController(), \"\")).shouldBeTrue();\n\n        //filter 3\n        the(matches(filters.get(2), new BookController(), \"\")).shouldBeFalse();\n        the(matches(filters.get(2), new PersonController(), \"\")).shouldBeFalse();\n        the(matches(filters.get(2), new LibraryController(), \"\")).shouldBeTrue();\n\n        //lets check the matches to specialized :\n        the(matches(filters.get(0), new LibraryController(), \"\")).shouldBeTrue();// global\n        the(matches(filters.get(1), new LibraryController(), \"\")).shouldBeTrue();// global\n        the(matches(filters.get(2), new LibraryController(), \"\")).shouldBeTrue();//special\n\n    }\n\n    private boolean matches(HttpSupportFilter filter, AppController controller, String action){\n        return Configuration.getFilterMetadata(filter).matches(new Route(controller, action, HttpMethod.GET));\n    }\n\n\n\n    @Test\n    public void shouldAddActionFilters(){\n\n        final LogFilter logFilter = new LogFilter();\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(logFilter).to(LibraryController.class).forActions(\"index\");\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        List<HttpSupportFilter> filters = Configuration.getFilters();\n        a(filters.size()).shouldBeEqual(1);\n\n        the(matches(filters.get(0), new LibraryController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(0), new LibraryController(), \"blah\")).shouldBeFalse();\n        a(filters.get(0)).shouldBeTheSameAs(logFilter);\n    }\n\n\n    //more importantly we are adding the same filter twice!\n    @Test\n    public void shouldMatchMultipleActionFiltersAndMultipleControllers(){\n\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(new LogFilter(), new XyzFilter()).to(LibraryController.class, BookController.class).forActions(\"index\", \"show\");\n                add(new LogFilter()).to(BookController.class).forActions(\"list\");\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        List<HttpSupportFilter> filters = Configuration.getFilters();\n        a(filters.size()).shouldBeEqual(3); // we added the same filter twice!\n\n        the(matches(filters.get(0), new LibraryController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(0), new BookController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(0), new LibraryController(), \"show\")).shouldBeTrue();\n        the(matches(filters.get(0), new BookController(), \"show\")).shouldBeTrue();\n\n        the(matches(filters.get(1), new LibraryController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(1), new BookController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(1), new LibraryController(), \"show\")).shouldBeTrue();\n        the(matches(filters.get(1), new BookController(), \"show\")).shouldBeTrue();\n        the(matches(filters.get(2), new BookController(), \"list\")).shouldBeTrue();\n        the(matches(filters.get(1), new BookController(), \"list\")).shouldBeFalse();\n    }\n\n    @Test\n    public void shouldExcludeController() {\n\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(new LogFilter(), new XyzFilter()).exceptFor(BookController.class);\n                add(new DefFilter(), new AbcFilter()).to(DoFiltersController.class);\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        List<HttpSupportFilter> filters = Configuration.getFilters();\n        a(filters.size()).shouldBeEqual(4);\n\n        the(filters.get(0)).shouldBeA(LogFilter.class);\n        the(filters.get(1)).shouldBeA(XyzFilter.class);\n        the(filters.get(2)).shouldBeA(DefFilter.class);\n        the(filters.get(3)).shouldBeA(AbcFilter.class);\n\n        //should match some random controllers\n        the(matches(filters.get(0), new LibraryController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(1), new CustomController(), \"index\")).shouldBeTrue();\n\n        //should not match BookController\n        the(matches(filters.get(0), new BookController(), \"index\")).shouldBeFalse();\n        the(matches(filters.get(1), new BookController(), \"index\")).shouldBeFalse();\n\n        //should match a specific controller\n        the(matches(filters.get(2), new DoFiltersController(), \"index\")).shouldBeTrue();\n        the(matches(filters.get(3), new DoFiltersController(), \"index\")).shouldBeTrue();\n\n        //should not match a other controllers\n        the(matches(filters.get(2), new BookController(), \"index\")).shouldBeFalse();\n        the(matches(filters.get(3), new BookController(), \"index\")).shouldBeFalse();\n    }\n\n    @Test\n    public void shouldTriggerFiltersInOrderOfDefinition() throws IOException, ServletException {\n        request.setServletPath(\"/do-filters\");\n        request.setMethod(\"GET\");\n        dispatcher.doFilter(request, response, filterChain);\n\n        a(response.getContentAsString()).shouldBeEqual(\"ok\");\n\n        the(getLine(0)).shouldBeEqual(\"GlobalFilter1 before\");\n        the(getLine(1)).shouldBeEqual(\"GlobalFilter2 before\");\n        the(getLine(2)).shouldBeEqual(\"->ControllerFilter1 before\");\n        the(getLine(3)).shouldBeEqual(\"->ControllerFilter2 before\");\n        the(getLine(4)).shouldBeEqual(\"-->DoFiltersController\");     //<<< Controller executed\n        the(getLine(5)).shouldBeEqual(\"->ControllerFilter2 after\");\n        the(getLine(6)).shouldBeEqual(\"->ControllerFilter1 after\");\n        the(getLine(7)).shouldBeEqual(\"GlobalFilter2 after\");\n        the(getLine(8)).shouldBeEqual(\"GlobalFilter1 after\");\n    }\n\n\n    @Test\n    public void shouldExecuteAfterEvenIfException() throws IOException, ServletException {\n        request.setServletPath(\"/do-filters/does-not-exist\");\n        request.setMethod(\"GET\");\n        dispatcher.doFilter(request, response, filterChain);\n\n        a(response.getContentAsString()).shouldContain(\"java.lang.NoSuchMethodException: app.controllers.DoFiltersController.doesNotExist(); app.controllers.DoFiltersController.doesNotExist()\");\n\n        the(getLine(0)).shouldBeEqual(\"GlobalFilter1 before\");\n        the(getLine(1)).shouldBeEqual(\"GlobalFilter2 before\");\n        the(getLine(2)).shouldBeEqual(\"->ControllerFilter1 before\");\n        the(getLine(3)).shouldBeEqual(\"->ControllerFilter2 before\");\n        //the(getLine(4)).shouldBeEqual(\"-->DoFiltersController\");     //<<< generates exception\n        the(getLine(4)).shouldBeEqual(\"->ControllerFilter2 after\");\n        the(getLine(5)).shouldBeEqual(\"->ControllerFilter1 after\");\n        the(getLine(6)).shouldBeEqual(\"GlobalFilter2 after\");\n        the(getLine(7)).shouldBeEqual(\"GlobalFilter1 after\");\n    }\n\n\n    @Test\n    public void shouldAllowMultipleInstancesOfFilterRegistered() {\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(new DBConnectionFilter());\n                add(new DBConnectionFilter(\"another\")).to(LibraryController.class);\n            }\n        };\n        config.init(new AppContext());\n        config.completeInit();\n        List<HttpSupportFilter> filters = Configuration.getFilters();\n        FilterMetadata filter1Metadata = Configuration.getFilterMetadata(filters.get(0));\n        FilterMetadata filter2Metadata = Configuration.getFilterMetadata(filters.get(1));\n        the(filter1Metadata).shouldNotBeTheSameAs(filter2Metadata);\n    }\n\n    @Test\n    public void shouldDefineFiltersAsAnonymousClasses() {\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                add(new HeadersLogFilter(){\n                    @Override\n                    public void after() {\n                        super.after();\n                    }\n                });\n\n                add(new TimingFilter(){\n                    @Override\n                    public void before() {\n                        super.before();\n                    }\n                });\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        a(Configuration.getFilters().size()).shouldBeEqual(2); // we added the same filter twice!\n    }\n\n    @Test(expected =IllegalArgumentException.class)\n    public void shouldPreventRegisteringTheSameFilterMoreThanOnce() {\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n                HeadersLogFilter filter = new HeadersLogFilter();\n                add(filter);\n                add(filter);\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n    }\n\n    @Test\n    public void shouldNotMatchWrongController() {\n        //create mock config\n        config = new AbstractControllerConfig() {\n            public void init(AppContext context) {\n\n                add(new HeadersLogFilter()).to(HomeController.class).forActions(\"gallery\");\n            }\n        };\n\n        //init config.\n        config.init(new AppContext());\n        config.completeInit();\n\n        List<HttpSupportFilter> filters= Configuration.getFilters();\n        the(filters.size()).shouldBeEqual(1);\n        the(matches(filters.get(0), new PersonController(), \"gallery\")).shouldBeFalse();\n        the(matches(filters.get(0), new HomeController(), \"gallery\")).shouldBeTrue();\n    }\n}\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- activeweb/src/test/java/org/javalite/activeweb/AbstractControllerConfigSpec.java	(revision df47342b50be567e46cfe97dc430f57c85cd5c3e)
++++ activeweb/src/test/java/org/javalite/activeweb/AbstractControllerConfigSpec.java	(date 1547133555000)
+@@ -23,10 +23,10 @@
+ import org.javalite.activeweb.controller_filters.HttpSupportFilter;
+ import org.javalite.activeweb.controller_filters.TimingFilter;
+ import org.javalite.activeweb.mock.*;
++import org.javalite.activeweb.mock.spring.MockFilterConfig;
+ import org.junit.After;
+ import org.junit.Before;
+ import org.junit.Test;
+-import org.springframework.mock.web.MockFilterConfig;
+ 
+ import javax.servlet.ServletException;
+ import java.io.IOException;
+@@ -43,7 +43,7 @@
+     private AbstractControllerConfig config;
+ 
+     @Before
+-    public void setUp() throws Exception {
++    public void setUp() {
+         Configuration.setFilterConfig(new MockFilterConfig());
+         OutputCollector.reset();
+     }

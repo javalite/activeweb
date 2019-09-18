@@ -1,1 +1,0 @@
-<@form controller="simple" data="data-input='hello'"/>

@@ -1,3 +1,0 @@
-explicit template
-
-name: ${name}
